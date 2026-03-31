@@ -1,0 +1,17 @@
+aeb:
+  ttc_brake_threshold_s: 1.2
+  ttc_warn_threshold_s: 2.5
+  min_speed_mps: 1.0
+  max_deceleration_mpss: -8.0
+  lateral_relevance_m: 2.0
+
+acc:
+  default_set_speed_mps: 22.2  # 80 km/h
+  min_gap_time_s: 1.5
+  max_acceleration_mpss: 2.0
+  max_deceleration_mpss: -3.5
+
+lka:
+  lane_center_deadband_m: 0.15
+  max_steering_torque_nm: 3.0
+  min_speed_mps: 16.7  # 60 km/h
