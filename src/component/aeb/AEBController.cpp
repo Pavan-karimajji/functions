@@ -4,8 +4,8 @@
 namespace adas { namespace functions {
 
 adas::control::ControlCommand AEBController::evaluate(
-    const adas::perception::TrackList& tracks,
-    const adas::common::VehicleState& vehicle_state) {
+    const adas::perception::GenObjectList& objects,
+    const adas::common::VehDyn& vehDyn) {
     adas::control::ControlCommand cmd;
     // TODO: Implement AEB logic
     // 1. Find most dangerous object (min TTC)

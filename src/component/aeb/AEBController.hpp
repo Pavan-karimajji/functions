@@ -9,8 +9,8 @@ public:
     ~AEBController() override = default;
 
     adas::control::ControlCommand evaluate(
-        const adas::perception::TrackList& tracks,
-        const adas::common::VehicleState& vehicle_state) override;
+        const adas::perception::GenObjectList& objects,
+        const adas::common::VehDyn& vehDyn) override;
 
     bool is_active() const override;
 
