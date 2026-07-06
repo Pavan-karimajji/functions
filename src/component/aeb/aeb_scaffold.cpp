@@ -1,4 +1,4 @@
 // Placeholder translation unit — Step 4 (AEB port skeleton) adds real sources
-// to this library's CMakeLists.txt FILES list, folding in AEBController's logic.
+// (aeb_ports.hpp, aeb_function.hpp/.cpp) to this library's CMakeLists.txt FILES list.
 namespace adas::functions {
 }
