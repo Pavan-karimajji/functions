@@ -10,9 +10,9 @@
 
 // Generated proto headers from modules/interfaces — the ONLY allowed data types
 // on ports (sensor-agnostic constraint, plan.md item 2).
-#include "perception/object.pb.h"   // adas::perception::GenObjectList
-#include "common/veh_dyn.pb.h"      // adas::common::VehDyn
-#include "functions/comp_state.pb.h" // adas::functions::CompState
+#include "PerceptionCore__Outputs/gen_object_list.pb.h"  // adas::perception::GenObjectList
+#include "VehSigProvider__Outputs/veh_dyn.pb.h"           // adas::common::VehDyn
+#include "common/comp_state.pb.h"                        // adas::functions::CompState
 
 namespace adas::functions {
 

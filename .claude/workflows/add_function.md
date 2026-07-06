@@ -3,7 +3,7 @@
 Recipe for adding a new driving function (e.g. `acc`). Follows plan.md §5.2/§5.6 and docs/functions_swr_tests.md. All changes are ADDITIVE — nothing existing moves.
 
 ## Prerequisites
-- Function-level output proto exists in `modules/interfaces/proto/functions/` (if not: follow the superproject `add_proto` workflow first; naming per `.claude/skills/naming_conventions.md`).
+- Function-level output proto exists in its own producer-owned folder, e.g. `modules/interfaces/proto/<Producer>__Outputs/` (if not: follow the superproject `add_proto` workflow first; naming per `.claude/skills/naming_conventions.md`). `proto/functions/` no longer exists — deleted in the Step 1b cleanup (`CompState` moved to `proto/common/`).
 - If the function produces actuation demands: its demand proto feeds the `arbiter` — functions NEVER publish `ControlCommand` directly (plan.md §5.4).
 
 ## Steps

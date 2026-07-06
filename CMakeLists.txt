@@ -6,6 +6,13 @@ if(NOT DEFINED TARGET_TYPE)
     set(TARGET_TYPE sil CACHE STRING "Build target: sil, autosar")
 endif()
 
+# Compile-time function selection (plan.md item 2). Empty by default — functions
+# graduate onto this list once their real port skeleton lands (Step 4 for aeb).
+# Override for testing: cmake --preset sil-release -DENABLED_FUNCTIONS=aeb
+if(NOT DEFINED ENABLED_FUNCTIONS)
+    set(ENABLED_FUNCTIONS "" CACHE STRING "Semicolon-separated list of enabled functions, e.g. \"aeb;acc\"")
+endif()
+
 find_package(AdasInterfaces REQUIRED)
 
 add_subdirectory(src/component)
@@ -19,5 +26,6 @@ elseif(TARGET_TYPE STREQUAL "standalone")
 endif()
 
 if(BUILD_TESTING)
-    # add_subdirectory(tests/unit)
+    enable_testing()
+    add_subdirectory(tests)
 endif()

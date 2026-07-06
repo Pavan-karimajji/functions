@@ -1,0 +1,66 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 22,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base-release",
+      "displayName": "Base Release",
+      "generator": "Visual Studio 18 2026",
+      "architecture": "x64",
+      "toolset": "v145",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/build-${presetName}/conan_toolchain.cmake",
+        "CMAKE_POLICY_DEFAULT_CMP0091": "NEW",
+        "AdasInterfaces_DIR": "${sourceDir}/../interfaces/cmake"
+      }
+    },
+    {
+      "name": "sil-release",
+      "displayName": "SIL Release",
+      "inherits": "base-release",
+      "binaryDir": "${sourceDir}/build-sil-release",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/build-sil-release/conan_toolchain.cmake",
+        "TARGET_TYPE": "sil",
+        "BUILD_TESTING": "OFF"
+      }
+    },
+    {
+      "name": "gtest-release",
+      "displayName": "GTest Release",
+      "inherits": "base-release",
+      "binaryDir": "${sourceDir}/build-gtest-release",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/build-gtest-release/conan_toolchain.cmake",
+        "TARGET_TYPE": "sil",
+        "BUILD_TESTING": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "sil-release",
+      "configurePreset": "sil-release",
+      "configuration": "Release"
+    },
+    {
+      "name": "gtest-release",
+      "configurePreset": "gtest-release",
+      "configuration": "Release"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "gtest-release",
+      "configurePreset": "gtest-release",
+      "configuration": "Release",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}
