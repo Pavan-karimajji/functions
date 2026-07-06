@@ -1,0 +1,28 @@
+# Per-project x per-part toolchain/platform mapping for this component.
+#
+# Two other axes are resolved elsewhere, not here:
+#   - project  (which calibration numbers: projects/<name>/default.yaml)   -> superproject variants/<project>.yaml
+#   - part     (which kind of deliverable: sil, later production/doc)     -> superproject variants/<project>.yaml
+# This file only answers, for a given project+part already chosen upstream,
+# which of *this component's own* toolchain presets to build with.
+#
+# Schema/naming mirrors a proven external reference pattern (a legacy
+# automotive supplier's per-component conf/build.yml) - see
+# docs/project_variant_model.md for the full model and rationale.
+#
+# NOT YET CONSUMED by build.bat/CMake or build.py - schema only, matching
+# plan.md's build.py-orchestration item (still a stub). build.bat's existing
+# `sil`/`gtest` targets are unaffected; this file doesn't change how to build
+# today, it records the intended shape for when project/part selection
+# becomes real orchestration.
+
+variants:
+  base:
+    sil:
+      platforms:
+        - build: x86_64_gcc
+      # production:   <- added once plan.md's QNX/Orin/TDA4VM item exists
+  proj_alpha:
+    sil:
+      platforms:
+        - build: x86_64_gcc
