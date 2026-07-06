@@ -29,4 +29,4 @@ void  fnShutdown(void* handle);
 
 ## Precedent
 
-acdc2's `acdc2_interface_c.cpp` (`SF_Acdc2RequiredData`/`ProvidedData` set/exec pattern) and gen1's `Fn_senExecFCT_SEN(reqPorts, proPorts, …)` — in the reference world, SIL is always "the algo as a bindable library", never a middleware node.
+acdc2's `acdc2_interface_c.cpp` (`SF_Acdc2RequiredData`/`ProvidedData` set/exec pattern) and gen1's `Fct_senExecFCT_SEN(reqPorts, proPorts, …)` — in the reference world, SIL is always "the algo as a bindable library", never a middleware node.
