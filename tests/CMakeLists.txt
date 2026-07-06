@@ -16,7 +16,9 @@ if(NOT GTest_FOUND)
 endif()
 
 add_executable(functions_tests
-    unit/test_scaffold.cpp
+    unit/common/framework/test_ports.cpp
+    unit/common/framework/test_function_params.cpp
+    unit/common/framework/test_function_runner.cpp
 )
 
 target_link_libraries(functions_tests PRIVATE

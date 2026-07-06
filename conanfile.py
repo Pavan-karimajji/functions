@@ -9,12 +9,13 @@ class FunctionsConan(ConanFile):
     package_type = "application"
 
     settings = "os", "arch", "compiler", "build_type"
-    requires = ("protobuf/3.21.12",)
+    requires = ("protobuf/3.21.12", "yaml-cpp/0.8.0")
     tool_requires = ("protobuf/3.21.12",)
 
     default_options = {
         "protobuf/*:shared": False,
         "protobuf/*:with_zlib": False,
+        "yaml-cpp/*:shared": False,
     }
 
     def set_version(self):
