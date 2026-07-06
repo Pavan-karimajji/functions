@@ -15,16 +15,29 @@ if(NOT GTest_FOUND)
     FetchContent_MakeAvailable(googletest)
 endif()
 
-add_executable(functions_tests
+set(FUNCTIONS_TEST_SOURCES
     unit/common/framework/test_ports.cpp
     unit/common/framework/test_function_params.cpp
     unit/common/framework/test_function_runner.cpp
 )
 
+# Test sources/links follow the same ENABLED_FUNCTIONS gating as production
+# code — otherwise a BCT-01-style override that disables aeb would break the
+# test build instead of just excluding fn_aeb's tests.
+if("aeb" IN_LIST ENABLED_FUNCTIONS)
+    list(APPEND FUNCTIONS_TEST_SOURCES unit/aeb/test_aeb_function.cpp)
+endif()
+
+add_executable(functions_tests ${FUNCTIONS_TEST_SOURCES})
+
 target_link_libraries(functions_tests PRIVATE
     functions_common
     GTest::gtest_main
 )
+
+if("aeb" IN_LIST ENABLED_FUNCTIONS)
+    target_link_libraries(functions_tests PRIVATE fn_aeb)
+endif()
 
 include(GoogleTest)
 gtest_discover_tests(functions_tests)

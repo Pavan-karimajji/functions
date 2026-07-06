@@ -10,7 +10,7 @@ endif()
 # graduate onto this list once their real port skeleton lands (Step 4 for aeb).
 # Override for testing: cmake --preset sil-release -DENABLED_FUNCTIONS=aeb
 if(NOT DEFINED ENABLED_FUNCTIONS)
-    set(ENABLED_FUNCTIONS "" CACHE STRING "Semicolon-separated list of enabled functions, e.g. \"aeb;acc\"")
+    set(ENABLED_FUNCTIONS "aeb" CACHE STRING "Semicolon-separated list of enabled functions, e.g. \"aeb;acc\"")
 endif()
 
 find_package(AdasInterfaces REQUIRED)

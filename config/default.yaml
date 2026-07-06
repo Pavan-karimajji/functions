@@ -4,6 +4,8 @@ aeb:
   min_speed_mps: 1.0
   max_deceleration_mpss: -8.0
   lateral_relevance_m: 2.0
+  max_age_objects_s: 0.2
+  max_age_ego_dyn_s: 0.2
 
 acc:
   default_set_speed_mps: 22.2  # 80 km/h
