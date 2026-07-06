@@ -25,19 +25,34 @@ set(FUNCTIONS_TEST_SOURCES
 # code — otherwise a BCT-01-style override that disables aeb would break the
 # test build instead of just excluding fn_aeb's tests.
 if("aeb" IN_LIST ENABLED_FUNCTIONS)
-    list(APPEND FUNCTIONS_TEST_SOURCES unit/aeb/test_aeb_function.cpp)
+    list(APPEND FUNCTIONS_TEST_SOURCES
+        unit/aeb/test_aeb_function.cpp
+        unit/sil/test_interface_c_api.cpp
+    )
 endif()
 
 add_executable(functions_tests ${FUNCTIONS_TEST_SOURCES})
 
 target_link_libraries(functions_tests PRIVATE
     functions_common
+    functions_sil
     GTest::gtest_main
 )
 
 if("aeb" IN_LIST ENABLED_FUNCTIONS)
     target_link_libraries(functions_tests PRIVATE fn_aeb)
 endif()
+
+# Windows only searches the exe's own directory (+ PATH) for DLLs at load
+# time — implicit linking against functions_sil's import lib resolves the
+# symbols at compile time, but functions_sil.dll itself still needs to be
+# copied next to functions_tests.exe or the process fails to start
+# (STATUS_DLL_NOT_FOUND) before any test body ever runs.
+add_custom_command(TARGET functions_tests POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        $<TARGET_FILE:functions_sil>
+        $<TARGET_FILE_DIR:functions_tests>
+)
 
 include(GoogleTest)
 gtest_discover_tests(functions_tests)

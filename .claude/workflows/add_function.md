@@ -13,7 +13,7 @@ Recipe for adding a new driving function (e.g. `acc`). Follows plan.md §5.2/§5
    - `<fn>_function.hpp` / `<fn>_function.cpp` — `<Fn>Function : IFunction` (`init`/`exec(dtS)`/`compState`)
    - `CMakeLists.txt` — static lib `fn_<fn>`, links `functions_common` + `AdasInterfaces`
 2. **Build wiring** (root `CMakeLists.txt`): the ENABLED_FUNCTIONS loop picks up `<fn>` — verify `add_subdirectory` guard + `ADAS_FN_<FN>_ENABLED` definition fire only when enabled. Add `<fn>` to the default implemented-functions list once real.
-3. **Composition root** (`src/platform/sil/functions_interface_c.cpp`): add the `#ifdef ADAS_FN_<FN>_ENABLED` block (port instances, function instantiation, runner registration) and extend `fctExec` buffers for the new ports → **bump `fctApiVersion()`**.
+3. **Composition root** (`src/platform/sil/functions_interface_c.cpp`): add the `#ifdef ADAS_FN_<FN>_ENABLED` block (port instances, function instantiation, runner registration) and extend `fnExec` buffers for the new ports → **bump `fnApiVersion()`**.
 4. **Calibration**: add `<fn>:` section to `config/default.yaml` (staleness limits at minimum, unit-suffixed names, e.g. `maxAgeObjectsS`).
 5. **Tests** (test-first, per docs/functions_swr_tests.md):
    - `tests/unit/<fn>/test_<fn>_function.cpp` — mirror the `AebFunctionTest` pattern (ACTIVE/DEGRADED/heartbeat cases minimum)
@@ -23,4 +23,4 @@ Recipe for adding a new driving function (e.g. `acc`). Follows plan.md §5.2/§5
 7. **Verify**: `build.bat gtest` green; BCT-01 (disable `<fn>` → its lib absent, build still green).
 
 ## Done when
-Both builds green with and without the function enabled; every new SWR has a test; `fctApiVersion` bumped if the C API changed.
+Both builds green with and without the function enabled; every new SWR has a test; `fnApiVersion` bumped if the C API changed.
