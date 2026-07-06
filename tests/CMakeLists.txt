@@ -36,6 +36,7 @@ add_executable(functions_tests ${FUNCTIONS_TEST_SOURCES})
 
 target_compile_definitions(functions_tests PRIVATE
     ADAS_FUNCTIONS_TEST_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures"
+    ADAS_FUNCTIONS_PROJECTS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../projects"
 )
 
 target_link_libraries(functions_tests PRIVATE

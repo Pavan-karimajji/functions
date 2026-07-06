@@ -37,7 +37,9 @@ typedef struct {
 /* Monotonic version, bumped whenever fnExec's signature/buffer semantics change (§5.8 item 2). */
 FN_API int fnApiVersion(void);
 
-/* configPath: path to a YAML file shaped like config/default.yaml. Returns NULL on error. */
+/* configPath: path to a YAML file shaped like projects/base/default.yaml (or any
+   other project's default.yaml, e.g. projects/proj_alpha/default.yaml — same
+   shape, different calibration numbers). Returns NULL on error. */
 FN_API void* fnInit(const char* configPath);
 
 /* One cycle. objects/egoDyn: serialized GenObjectList/VehDyn (NULL if not received this tick).

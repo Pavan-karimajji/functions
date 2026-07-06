@@ -17,8 +17,8 @@
 
 namespace adas::functions {
 
-// Loads one YAML file shaped like config/default.yaml (one top-level section
-// per function name) and hands out each function's section. A missing file
+// Loads one YAML file shaped like projects/base/default.yaml (one top-level
+// section per function name) and hands out each function's section. A missing file
 // or missing section is not an error here — it degrades to an empty
 // FunctionParams, so a function's init() falls back to its own hardcoded
 // defaults. Lives here (not src/component/...) because it does disk I/O —
@@ -35,8 +35,9 @@ public:
   FunctionParams section(const std::string& functionName) const;
 
   // Whole file as one FunctionParams — for flat, non-per-function files like
-  // config/ego_params.yaml (as opposed to section(), which is for files
-  // shaped like config/default.yaml: one top-level section per function).
+  // projects/base/ego_params.yaml (as opposed to section(), which is for
+  // files shaped like projects/base/default.yaml: one top-level section per
+  // function).
   FunctionParams root() const;
 
 private:

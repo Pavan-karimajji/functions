@@ -1,0 +1,23 @@
+# Illustrative example project — deliberately different values from
+# projects/base/default.yaml, not a real second vehicle program. Demonstrates
+# that fnInit(configPath) pointed at a project folder changes behavior.
+
+aeb:
+  AEB_TTC_BRAKE_THRESHOLD_S: 1.4
+  AEB_TTC_WARN_THRESHOLD_S: 2.8
+  AEB_MIN_SPEED_MPS: 1.0
+  AEB_MAX_DECELERATION_MPSS: -9.0
+  AEB_LATERAL_RELEVANCE_M: 2.2
+  AEB_MAX_AGE_OBJECTS_S: 0.2
+  AEB_MAX_AGE_EGO_DYN_S: 0.2
+
+acc:
+  ACC_DEFAULT_SET_SPEED_MPS: 25.0
+  ACC_MIN_GAP_TIME_S: 1.6
+  ACC_MAX_ACCELERATION_MPSS: 1.8
+  ACC_MAX_DECELERATION_MPSS: -3.0
+
+lka:
+  LKA_LANE_CENTER_DEADBAND_M: 0.12
+  LKA_MAX_STEERING_TORQUE_NM: 3.5
+  LKA_MIN_SPEED_MPS: 16.7

@@ -79,8 +79,8 @@ void* fnInit(const char* configPath) {
     auto* handle = new FnHandle();
     adas::functions::ParamLoader loader(configPath != nullptr ? configPath : "");
 
-    // Placeholder: proves config/ego_params.yaml reads end-to-end through
-    // ParamLoader::root(). Read-only, not consumed by any function/port yet —
+    // Placeholder: proves projects/base/ego_params.yaml reads end-to-end
+    // through ParamLoader::root(). Read-only, not consumed by any function/port yet —
     // real wiring is plan.md item 2's job, once AEB's TTC/target-selection
     // logic knows exactly which fields it needs (docs/ego_params.md rule 8).
     adas::functions::ParamLoader egoLoader(ADAS_EGO_PARAMS_PATH);
