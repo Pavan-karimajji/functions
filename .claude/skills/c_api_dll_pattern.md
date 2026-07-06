@@ -13,7 +13,7 @@ void* fctInit(const char* configPath);   /* NULL on error */
 int   fctExec(void* handle, double dtS,
               const FctReqBuf* objects,  /* serialized GenObjectList */
               const FctReqBuf* egoDyn,   /* serialized VehDyn        */
-              FctProBuf* fcwWarning,     /* out: serialized FcwWarning */
+              FctProBuf* hypReaction,    /* out: serialized AebHypReaction */
               FctProBuf* compState);     /* out: serialized CompState  */
 void  fctShutdown(void* handle);
 ```
