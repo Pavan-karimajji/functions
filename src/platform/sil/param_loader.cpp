@@ -17,4 +17,8 @@ FunctionParams ParamLoader::section(const std::string& functionName) const {
   return FunctionParams();
 }
 
+FunctionParams ParamLoader::root() const {
+  return FunctionParams(root_);
+}
+
 }  // namespace adas::functions

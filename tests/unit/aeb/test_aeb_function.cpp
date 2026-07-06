@@ -7,8 +7,8 @@ namespace {
 
 FunctionParams testParams() {
   return FunctionParams(YAML::Load(
-      "max_age_objects_s: 0.2\n"
-      "max_age_ego_dyn_s: 0.2\n"));
+      "AEB_MAX_AGE_OBJECTS_S: 0.2\n"
+      "AEB_MAX_AGE_EGO_DYN_S: 0.2\n"));
 }
 
 TEST(AebFunctionTest, RunningWhenBothInputsFreshAndValid) {

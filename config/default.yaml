@@ -1,19 +1,19 @@
 aeb:
-  ttc_brake_threshold_s: 1.2
-  ttc_warn_threshold_s: 2.5
-  min_speed_mps: 1.0
-  max_deceleration_mpss: -8.0
-  lateral_relevance_m: 2.0
-  max_age_objects_s: 0.2
-  max_age_ego_dyn_s: 0.2
+  AEB_TTC_BRAKE_THRESHOLD_S: 1.2
+  AEB_TTC_WARN_THRESHOLD_S: 2.5
+  AEB_MIN_SPEED_MPS: 1.0
+  AEB_MAX_DECELERATION_MPSS: -8.0
+  AEB_LATERAL_RELEVANCE_M: 2.0
+  AEB_MAX_AGE_OBJECTS_S: 0.2
+  AEB_MAX_AGE_EGO_DYN_S: 0.2
 
 acc:
-  default_set_speed_mps: 22.2  # 80 km/h
-  min_gap_time_s: 1.5
-  max_acceleration_mpss: 2.0
-  max_deceleration_mpss: -3.5
+  ACC_DEFAULT_SET_SPEED_MPS: 22.2  # 80 km/h
+  ACC_MIN_GAP_TIME_S: 1.5
+  ACC_MAX_ACCELERATION_MPSS: 2.0
+  ACC_MAX_DECELERATION_MPSS: -3.5
 
 lka:
-  lane_center_deadband_m: 0.15
-  max_steering_torque_nm: 3.0
-  min_speed_mps: 16.7  # 60 km/h
+  LKA_LANE_CENTER_DEADBAND_M: 0.15
+  LKA_MAX_STEERING_TORQUE_NM: 3.0
+  LKA_MIN_SPEED_MPS: 16.7  # 60 km/h

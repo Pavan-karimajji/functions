@@ -19,6 +19,7 @@ set(FUNCTIONS_TEST_SOURCES
     unit/common/framework/test_ports.cpp
     unit/common/framework/test_function_params.cpp
     unit/common/framework/test_function_runner.cpp
+    unit/sil/test_param_loader.cpp   # ungated: ParamLoader doesn't depend on ENABLED_FUNCTIONS
 )
 
 # Test sources/links follow the same ENABLED_FUNCTIONS gating as production
@@ -32,6 +33,10 @@ if("aeb" IN_LIST ENABLED_FUNCTIONS)
 endif()
 
 add_executable(functions_tests ${FUNCTIONS_TEST_SOURCES})
+
+target_compile_definitions(functions_tests PRIVATE
+    ADAS_FUNCTIONS_TEST_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures"
+)
 
 target_link_libraries(functions_tests PRIVATE
     functions_common

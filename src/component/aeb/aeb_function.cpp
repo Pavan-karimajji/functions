@@ -6,8 +6,8 @@ AebFunction::AebFunction(const AebReqPorts& reqPorts, AebProPorts& proPorts)
     : reqPorts_(reqPorts), proPorts_(proPorts) {}
 
 void AebFunction::init(const FunctionParams& params) {
-  maxAgeObjectsS_ = params.get<double>("max_age_objects_s", maxAgeObjectsS_);
-  maxAgeEgoDynS_ = params.get<double>("max_age_ego_dyn_s", maxAgeEgoDynS_);
+  maxAgeObjectsS_ = params.get<double>("AEB_MAX_AGE_OBJECTS_S", maxAgeObjectsS_);
+  maxAgeEgoDynS_ = params.get<double>("AEB_MAX_AGE_EGO_DYN_S", maxAgeEgoDynS_);
 }
 
 void AebFunction::exec(double dtS) {
