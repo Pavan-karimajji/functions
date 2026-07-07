@@ -25,21 +25,29 @@
 # requires:/tool_requires: below ARE mechanically consumed: conanfile.py's
 # requirements()/build_requirements() methods read this file and call
 # self.requires()/self.tool_requires() per entry, replacing what used to be
-# a hardcoded Python tuple (docs/conan_requires_in_build_yml.md).
-# Deliberately flat, not nested under variants/project/part: every project
-# needs the same dependency versions today (no real per-project divergence to
-# express yet) - see that doc's §0 for why this doesn't reopen per-variant
-# version pinning (a materially different, bigger feature, not done here).
-
-requires:
-  - protobuf/3.21.12
-  - yaml-cpp/0.8.0
-  - adas-interfaces/1.0.0
-tool_requires:
-  - protobuf/3.21.12
+# a hardcoded Python tuple (docs/conan_requires_in_build_yml.md). Nested under
+# variants/<project> only - one level up from platforms:, deliberately NOT
+# further nested per-part, since which third-party libraries a component
+# needs doesn't vary by build kind (sil/gtest/standalone all link the same
+# ones) - only platforms: is genuinely part-scoped. build.bat sets an
+# ADAS_PROJECT env var (from its own <project> CLI arg) before calling
+# `conan install`, so conanfile.py can resolve the matching branch (default
+# base if unset, e.g. a bare `conan install .`). Today's values are identical
+# across base/proj_alpha - deliberate skeleton-for-scale duplication (same
+# reasoning as platforms:'s own per-project copies), not because a real
+# difference exists yet. Real per-project version divergence is now just a
+# data change, no schema/mechanism change, whenever it's needed - proven by
+# temporarily diverging proj_alpha's yaml-cpp version during verification:
+# base built clean, proj_alpha failed on its own (reverted) fake version.
 
 variants:
   base:
+    requires:
+      - protobuf/3.21.12
+      - yaml-cpp/0.8.0
+      - adas-interfaces/1.0.0
+    tool_requires:
+      - protobuf/3.21.12
     sil:
       platforms:
         - build: vs2022
@@ -52,6 +60,12 @@ variants:
       #   platforms:                 #    item exists; same file, new part key
       #     - build: aarch64_qcc_qnx
   proj_alpha:
+    requires:
+      - protobuf/3.21.12
+      - yaml-cpp/0.8.0
+      - adas-interfaces/1.0.0
+    tool_requires:
+      - protobuf/3.21.12
     sil:
       platforms:
         - build: vs2022

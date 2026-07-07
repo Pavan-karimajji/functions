@@ -1,6 +1,7 @@
 from conan import ConanFile
 from conan.tools.cmake import CMakeDeps, CMakeToolchain
 from pathlib import Path
+import os
 import re
 import yaml
 
@@ -19,7 +20,9 @@ class FunctionsConan(ConanFile):
 
     def _build_conf(self):
         conf_path = Path(self.recipe_folder) / "conf" / "build.yml"
-        return yaml.safe_load(conf_path.read_text(encoding="utf-8"))
+        conf = yaml.safe_load(conf_path.read_text(encoding="utf-8"))
+        project = os.environ.get("ADAS_PROJECT", "base")
+        return conf["variants"][project]
 
     def requirements(self):
         for ref in self._build_conf().get("requires", []):
