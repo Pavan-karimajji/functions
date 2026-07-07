@@ -8,9 +8,17 @@ endif()
 
 # Compile-time function selection (plan.md item 2). Functions graduate onto
 # this list once their real port skeleton lands (aeb since Step 4).
-# Override for testing: cmake --preset sil-release -DENABLED_FUNCTIONS="aeb;acc"
+# Override for testing: cmake --preset sil-vs2022 -DENABLED_FUNCTIONS="aeb;acc"
 if(NOT DEFINED ENABLED_FUNCTIONS)
     set(ENABLED_FUNCTIONS "aeb" CACHE STRING "Semicolon-separated list of enabled functions, e.g. \"aeb;acc\"")
+endif()
+
+# Which projects/<name> calibration folder to bake in as ADAS_EGO_PARAMS_PATH
+# (see src/platform/sil/CMakeLists.txt). Set by build.bat's third argument
+# (build.bat <part> <platform> <project>); override manually with
+# -DADAS_PROJECT=<name>.
+if(NOT DEFINED ADAS_PROJECT)
+    set(ADAS_PROJECT base CACHE STRING "Which projects/<name> calibration folder to build against, e.g. base, proj_alpha")
 endif()
 
 find_package(AdasInterfaces REQUIRED)

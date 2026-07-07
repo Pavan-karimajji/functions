@@ -11,7 +11,16 @@
 # docs/project_variant_model.md for the full model and rationale.
 #
 # platforms: is read by build.py (superproject dispatcher, plan.md history)
-# to resolve which toolchain to build for a given project+part.
+# to resolve which toolchain to build with, and is now passed straight
+# through as build.bat's second argument (build.bat <part> <platform>) -
+# it drives the actual CMake preset name (<part>-<platform>), not just a
+# log line. Platform token = compiler+arch+config as ONE string (matches
+# a proven external reference's own convention - see
+# docs/project_variant_model.md and the "build names" discussion in
+# docs/sw_build_architecture.md): bare name (vs2022) is the default config,
+# a trailing _debug suffix (vs2022_debug) is the explicit debug variant.
+# There is deliberately no separate build_type field - see build.bat, which
+# derives Release/Debug from this same string instead of a third axis.
 #
 # uses: is documentation only, not yet mechanically consumed by anything -
 # adas-interfaces/1.0.0 is hardcoded directly in conanfile.py's requires,
@@ -24,7 +33,9 @@ variants:
   base:
     sil:
       platforms:
-        - build: x86_64_gcc
+        - build: vs2022
+        # - build: vs2022_debug      # <- illustrative only: no debug preset
+        #                            #    exists yet in CMakePresets.json
         # - build: aarch64_qcc_qnx   # <- illustrative only: needs its own
         #                            #    build.bat target + toolchain file
         #                            #    first (plan.md item 8)
@@ -37,7 +48,7 @@ variants:
   proj_alpha:
     sil:
       platforms:
-        - build: x86_64_gcc
+        - build: vs2022
       uses:
         adas-interfaces:
           release: 1.0.0
