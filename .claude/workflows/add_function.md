@@ -19,7 +19,7 @@ Recipe for adding a new driving function (e.g. `acc`). Follows plan.md §5.2/§5
    - `tests/unit/<fn>/test_<fn>_function.cpp` — mirror the `AebFunctionTest` pattern (ACTIVE/DEGRADED/heartbeat cases minimum)
    - extend `InterfaceCApiTest` round-trip for the new buffers
    - add SWR entries + traceability rows to docs/functions_swr_tests.md
-6. **Variant wiring**: add `<fn>` to `functions.enabled` in the relevant `variants/*.yaml`.
+6. **Variant wiring**: add `<fn>` to `functions.enabled` in the relevant `conf/*.yaml`.
 7. **Verify**: `build.bat gtest` green; BCT-01 (disable `<fn>` → its lib absent, build still green).
 
 ## Done when
