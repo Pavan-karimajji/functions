@@ -10,18 +10,22 @@
 # automotive supplier's per-component conf/build.yml) - see
 # docs/project_variant_model.md for the full model and rationale.
 #
-# NOT YET CONSUMED by build.bat/CMake or build.py - schema only, matching
-# plan.md's build.py-orchestration item (still a stub). build.bat's existing
-# `sil`/`gtest` targets are unaffected; this file doesn't change how to build
-# today, it records the intended shape for when project/part selection
-# becomes real orchestration.
+# NOT YET CONSUMED by build.bat/CMake - schema only, to be read by build.py
+# (plan.md item 1, in progress). build.bat's existing `sil`/`gtest` targets
+# are unaffected; this file doesn't change how to build today, it records
+# the intended shape for project/part-driven dispatch from the superproject.
 
 variants:
   base:
     sil:
       platforms:
         - build: x86_64_gcc
-      # production:   <- added once plan.md's QNX/Orin/TDA4VM item exists
+        # - build: aarch64_qcc_qnx   # <- illustrative only: needs its own
+        #                            #    build.bat target + toolchain file
+        #                            #    first (plan.md item 8)
+      # production:                  # <- added once plan.md's QNX/Orin/TDA4VM
+      #   platforms:                 #    item exists; same file, new part key
+      #     - build: aarch64_qcc_qnx
   proj_alpha:
     sil:
       platforms:
