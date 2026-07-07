@@ -38,7 +38,7 @@ variants:
         #                            #    exists yet in CMakePresets.json
         # - build: aarch64_qcc_qnx   # <- illustrative only: needs its own
         #                            #    build.bat target + toolchain file
-        #                            #    first (plan.md item 8)
+        #                            #    first (plan.md item 7)
       uses:
         adas-interfaces:
           release: 1.0.0
