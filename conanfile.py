@@ -2,6 +2,7 @@ from conan import ConanFile
 from conan.tools.cmake import CMakeDeps, CMakeToolchain
 from pathlib import Path
 import re
+import yaml
 
 
 class FunctionsConan(ConanFile):
@@ -9,14 +10,24 @@ class FunctionsConan(ConanFile):
     package_type = "application"
 
     settings = "os", "arch", "compiler", "build_type"
-    requires = ("protobuf/3.21.12", "yaml-cpp/0.8.0", "adas-interfaces/1.0.0")
-    tool_requires = ("protobuf/3.21.12",)
 
     default_options = {
         "protobuf/*:shared": False,
         "protobuf/*:with_zlib": False,
         "yaml-cpp/*:shared": False,
     }
+
+    def _build_conf(self):
+        conf_path = Path(self.recipe_folder) / "conf" / "build.yml"
+        return yaml.safe_load(conf_path.read_text(encoding="utf-8"))
+
+    def requirements(self):
+        for ref in self._build_conf().get("requires", []):
+            self.requires(ref)
+
+    def build_requirements(self):
+        for ref in self._build_conf().get("tool_requires", []):
+            self.tool_requires(ref)
 
     def set_version(self):
         cmakelists = Path(self.recipe_folder) / "CMakeLists.txt"

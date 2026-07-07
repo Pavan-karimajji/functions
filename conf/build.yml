@@ -22,12 +22,21 @@
 # There is deliberately no separate build_type field - see build.bat, which
 # derives Release/Debug from this same string instead of a third axis.
 #
-# uses: is documentation only, not yet mechanically consumed by anything -
-# adas-interfaces/1.0.0 is hardcoded directly in conanfile.py's requires,
-# same as protobuf/yaml-cpp already are, since every project needs the same
-# version today (no real per-project divergence to express yet). Wiring
-# build.py to read this and override conan install was deliberately skipped
-# for this pass - see plan.md's interfaces item for why.
+# requires:/tool_requires: below ARE mechanically consumed: conanfile.py's
+# requirements()/build_requirements() methods read this file and call
+# self.requires()/self.tool_requires() per entry, replacing what used to be
+# a hardcoded Python tuple (docs/conan_requires_in_build_yml.md).
+# Deliberately flat, not nested under variants/project/part: every project
+# needs the same dependency versions today (no real per-project divergence to
+# express yet) - see that doc's §0 for why this doesn't reopen per-variant
+# version pinning (a materially different, bigger feature, not done here).
+
+requires:
+  - protobuf/3.21.12
+  - yaml-cpp/0.8.0
+  - adas-interfaces/1.0.0
+tool_requires:
+  - protobuf/3.21.12
 
 variants:
   base:
@@ -38,10 +47,7 @@ variants:
         #                            #    exists yet in CMakePresets.json
         # - build: aarch64_qcc_qnx   # <- illustrative only: needs its own
         #                            #    build.bat target + toolchain file
-        #                            #    first (plan.md item 7)
-      uses:
-        adas-interfaces:
-          release: 1.0.0
+        #                            #    first (plan.md item 6)
       # production:                  # <- added once plan.md's QNX/Orin/TDA4VM
       #   platforms:                 #    item exists; same file, new part key
       #     - build: aarch64_qcc_qnx
@@ -49,6 +55,3 @@ variants:
     sil:
       platforms:
         - build: vs2022
-      uses:
-        adas-interfaces:
-          release: 1.0.0
