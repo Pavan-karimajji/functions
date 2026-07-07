@@ -10,10 +10,15 @@
 # automotive supplier's per-component conf/build.yml) - see
 # docs/project_variant_model.md for the full model and rationale.
 #
-# NOT YET CONSUMED by build.bat/CMake - schema only, to be read by build.py
-# (plan.md item 1, in progress). build.bat's existing `sil`/`gtest` targets
-# are unaffected; this file doesn't change how to build today, it records
-# the intended shape for project/part-driven dispatch from the superproject.
+# platforms: is read by build.py (superproject dispatcher, plan.md history)
+# to resolve which toolchain to build for a given project+part.
+#
+# uses: is documentation only, not yet mechanically consumed by anything -
+# adas-interfaces/1.0.0 is hardcoded directly in conanfile.py's requires,
+# same as protobuf/yaml-cpp already are, since every project needs the same
+# version today (no real per-project divergence to express yet). Wiring
+# build.py to read this and override conan install was deliberately skipped
+# for this pass - see plan.md's interfaces item for why.
 
 variants:
   base:
@@ -23,6 +28,9 @@ variants:
         # - build: aarch64_qcc_qnx   # <- illustrative only: needs its own
         #                            #    build.bat target + toolchain file
         #                            #    first (plan.md item 8)
+      uses:
+        adas-interfaces:
+          release: 1.0.0
       # production:                  # <- added once plan.md's QNX/Orin/TDA4VM
       #   platforms:                 #    item exists; same file, new part key
       #     - build: aarch64_qcc_qnx
@@ -30,3 +38,6 @@ variants:
     sil:
       platforms:
         - build: x86_64_gcc
+      uses:
+        adas-interfaces:
+          release: 1.0.0

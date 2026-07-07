@@ -14,8 +14,7 @@
       "toolset": "v145",
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/build-${presetName}/conan_toolchain.cmake",
-        "CMAKE_POLICY_DEFAULT_CMP0091": "NEW",
-        "AdasInterfaces_DIR": "${sourceDir}/../interfaces/cmake"
+        "CMAKE_POLICY_DEFAULT_CMP0091": "NEW"
       }
     },
     {
