@@ -2,7 +2,7 @@
 
 #include "component/common/framework/ports.hpp"
 
-namespace adas::functions {
+namespace adas::df {
 namespace {
 
 TEST(PortsTest, ReqPortDefaultsToInvalid) {
@@ -27,4 +27,4 @@ TEST(PortsTest, ProPortDefaultsToNotUpdated) {
 }
 
 }  // namespace
-}  // namespace adas::functions
+}  // namespace adas::df

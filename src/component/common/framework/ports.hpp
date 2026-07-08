@@ -1,6 +1,6 @@
 #pragma once
 
-namespace adas::functions {
+namespace adas::df {
 
 // Require-port: latest value received for one input, plus how the receiving
 // function should judge it — age since receipt and whether it's usable at
@@ -22,4 +22,4 @@ struct ProPort {
   bool updated = false;
 };
 
-}  // namespace adas::functions
+}  // namespace adas::df

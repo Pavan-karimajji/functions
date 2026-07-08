@@ -10,7 +10,7 @@ Recipe for adding a new driving function (e.g. `acc`). Follows plan.md §5.2/§5
 
 1. **Component folder** `src/component/<fn>/` (snake_case files):
    - `<fn>_ports.hpp` — `<Fn>ReqPorts`/`<Fn>ProPorts` from `.claude/templates/function_ports_template.hpp`; `compState` pro port is mandatory
-   - `<fn>_function.hpp` / `<fn>_function.cpp` — `<Fn>Function : IFunction` (`init`/`exec(dtS)`/`compState`)
+   - `<fn>_function.hpp` / `<fn>_function.cpp` — `<Fn>Function : IDfFunction` (`init`/`exec(dtS)`/`compState`)
    - `CMakeLists.txt` — static lib `fn_<fn>`, links `df_common` + `AdasInterfaces`
 2. **Build wiring** (root `CMakeLists.txt`): the ENABLED_FUNCTIONS loop picks up `<fn>` — verify `add_subdirectory` guard + `ADAS_FN_<FN>_ENABLED` definition fire only when enabled. Add `<fn>` to the default implemented-functions list once real.
 3. **Composition root** (`src/platform/df_sil/df_interface_c.cpp`): add the `#ifdef ADAS_FN_<FN>_ENABLED` block (port instances, function instantiation, runner registration) and extend `dfExec` buffers for the new ports → **bump `dfApiVersion()`**.

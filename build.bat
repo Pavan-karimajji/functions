@@ -70,7 +70,7 @@ exit /b 0
 
 :usage
 echo Usage: build.bat ^<project^> ^<sil^|gtest^> ^<platform^> [clean]
-echo   e.g. build.bat base sil vs2022
-echo        build.bat proj_alpha sil vs2022
-echo        build.bat base gtest vs2022
+echo   e.g. build.bat base sil vs2026
+echo        build.bat proj_alpha sil vs2026
+echo        build.bat base gtest vs2026
 exit /b 1

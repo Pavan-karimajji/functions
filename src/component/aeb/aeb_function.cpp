@@ -1,11 +1,11 @@
 #include "component/aeb/aeb_function.hpp"
 
-namespace adas::functions {
+namespace adas::df {
 
 AebFunction::AebFunction(const AebReqPorts& reqPorts, AebProPorts& proPorts)
     : reqPorts_(reqPorts), proPorts_(proPorts) {}
 
-void AebFunction::init(const FunctionParams& params) {
+void AebFunction::init(const DfParams& params) {
   maxAgeObjectsS_ = params.get<double>("AEB_MAX_AGE_OBJECTS_S", maxAgeObjectsS_);
   maxAgeEgoDynS_ = params.get<double>("AEB_MAX_AGE_EGO_DYN_S", maxAgeEgoDynS_);
 }
@@ -36,4 +36,4 @@ const adas::functions::CompState& AebFunction::compState() const {
   return proPorts_.compState.data;
 }
 
-}  // namespace adas::functions
+}  // namespace adas::df

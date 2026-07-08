@@ -3,7 +3,7 @@
 #include <string>
 #include <yaml-cpp/yaml.h>
 
-namespace adas::functions {
+namespace adas::df {
 
 // Thin wrapper around one function's YAML config section. Confines yaml-cpp
 // to this one header instead of leaking YAML::Node into every function file
@@ -12,10 +12,10 @@ namespace adas::functions {
 // directly via YAML::Load() on a string literal — either way a
 // default-constructed/empty node is valid input, get() just always returns
 // the caller's default in that case (missing section == missing key).
-class FunctionParams {
+class DfParams {
 public:
-  FunctionParams() = default;
-  explicit FunctionParams(YAML::Node section) : section_(std::move(section)) {}
+  DfParams() = default;
+  explicit DfParams(YAML::Node section) : section_(std::move(section)) {}
 
   template <typename T>
   T get(const std::string& key, const T& defaultValue) const {
@@ -29,4 +29,4 @@ private:
   YAML::Node section_;
 };
 
-}  // namespace adas::functions
+}  // namespace adas::df

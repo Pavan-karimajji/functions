@@ -5,7 +5,7 @@
 #include <string>
 
 #include "param_loader.hpp"
-#include "component/common/framework/function_runner.hpp"
+#include "component/common/framework/df_runner.hpp"
 #include "component/common/framework/ports.hpp"
 
 #ifdef ADAS_FN_AEB_ENABLED
@@ -25,7 +25,7 @@ namespace {
 // well-defined and returns true — the host's own `valid` flag is the
 // authoritative "was something received" signal, not the pointer's nullness.
 template <typename T>
-void updateReqPort(adas::functions::ReqPort<T>& port, const DfReqBuf* buf) {
+void updateReqPort(adas::df::ReqPort<T>& port, const DfReqBuf* buf) {
   if (buf != nullptr && buf->valid != 0 &&
       port.data.ParseFromArray(buf->data, static_cast<int>(buf->len))) {
     port.ageS = buf->ageS;
@@ -58,11 +58,11 @@ bool writeProBuf(const google::protobuf::Message& msg, bool updated, DfProBuf* b
 // see add_function.md step 3.
 struct DfHandle {
 #ifdef ADAS_FN_AEB_ENABLED
-  adas::functions::AebReqPorts aebReqPorts;
-  adas::functions::AebProPorts aebProPorts;
-  adas::functions::AebFunction aebFunction{aebReqPorts, aebProPorts};
+  adas::df::AebReqPorts aebReqPorts;
+  adas::df::AebProPorts aebProPorts;
+  adas::df::AebFunction aebFunction{aebReqPorts, aebProPorts};
 #endif
-  adas::functions::FunctionRunner runner;
+  adas::df::DfRunner runner;
 };
 
 }  // namespace
@@ -77,13 +77,13 @@ void* dfInit(const char* configPath) {
   // change, and mandatory for non-C++ hosts that couldn't catch one anyway.
   try {
     auto* handle = new DfHandle();
-    adas::functions::ParamLoader loader(configPath != nullptr ? configPath : "");
+    adas::df::ParamLoader loader(configPath != nullptr ? configPath : "");
 
     // Placeholder: proves projects/base/ego_params.yaml reads end-to-end
     // through ParamLoader::root(). Read-only, not consumed by any function/port yet —
     // real wiring is plan.md item 2's job, once AEB's TTC/target-selection
     // logic knows exactly which fields it needs (docs/ego_params.md rule 8).
-    adas::functions::ParamLoader egoLoader(ADAS_EGO_PARAMS_PATH);
+    adas::df::ParamLoader egoLoader(ADAS_EGO_PARAMS_PATH);
     std::cout << "[ego_params placeholder] EGO_LENGTH_M="
               << egoLoader.root().get<double>("EGO_LENGTH_M", -1.0)
               << " EGO_WHEELBASE_M="

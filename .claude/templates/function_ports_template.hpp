@@ -6,7 +6,7 @@
 #pragma once
 
 #include "component/common/framework/ports.hpp"
-#include "component/common/framework/i_function.hpp"
+#include "component/common/framework/i_df_function.hpp"
 
 // Generated proto headers from modules/interfaces — the ONLY allowed data types
 // on ports (sensor-agnostic constraint, plan.md item 2).
@@ -14,7 +14,7 @@
 #include "VehSigProvider__Outputs/veh_dyn.pb.h"           // adas::common::VehDyn
 #include "common/comp_state.pb.h"                        // adas::functions::CompState
 
-namespace adas::functions {
+namespace adas::df {
 
 // Require-ports: what this function consumes. One member per input.
 struct <Fn>ReqPorts {
@@ -30,11 +30,11 @@ struct <Fn>ProPorts {
   // NEVER a ControlCommand here — demands go to the arbiter (plan.md §5.4)
 };
 
-class <Fn>Function final : public IFunction {
+class <Fn>Function final : public IDfFunction {
 public:
   <Fn>Function(const <Fn>ReqPorts& reqPorts, <Fn>ProPorts& proPorts);
 
-  void init(const FunctionParams& params) override;  // reads <fn>: config section
+  void init(const DfParams& params) override;  // reads <fn>: config section
   void exec(double dtS) override;                     // one cycle; no clock reads, no I/O
   const adas::functions::CompState& compState() const override;
 
@@ -44,4 +44,4 @@ private:
   // calibration read in init(): e.g. maxAgeObjectsS_, maxAgeEgoDynS_
 };
 
-}  // namespace adas::functions
+}  // namespace adas::df

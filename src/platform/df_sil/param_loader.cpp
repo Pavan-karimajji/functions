@@ -1,6 +1,6 @@
 #include "param_loader.hpp"
 
-namespace adas::functions {
+namespace adas::df {
 
 ParamLoader::ParamLoader(const std::string& configPath) {
   try {
@@ -10,15 +10,15 @@ ParamLoader::ParamLoader(const std::string& configPath) {
   }
 }
 
-FunctionParams ParamLoader::section(const std::string& functionName) const {
+DfParams ParamLoader::section(const std::string& functionName) const {
   if (root_ && root_[functionName]) {
-    return FunctionParams(root_[functionName]);
+    return DfParams(root_[functionName]);
   }
-  return FunctionParams();
+  return DfParams();
 }
 
-FunctionParams ParamLoader::root() const {
-  return FunctionParams(root_);
+DfParams ParamLoader::root() const {
+  return DfParams(root_);
 }
 
-}  // namespace adas::functions
+}  // namespace adas::df

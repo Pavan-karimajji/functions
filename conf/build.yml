@@ -17,8 +17,8 @@
 # log line. Platform token = compiler+arch+config as ONE string (matches
 # a proven external reference's own convention - see
 # docs/project_variant_model.md and the "build names" discussion in
-# docs/sw_build_architecture.md): bare name (vs2022) is the default config,
-# a trailing _debug suffix (vs2022_debug) is the explicit debug variant.
+# docs/sw_build_architecture.md): bare name (vs2026) is the default config,
+# a trailing _debug suffix (vs2026_debug) is the explicit debug variant.
 # There is deliberately no separate build_type field - see build.bat, which
 # derives Release/Debug from this same string instead of a third axis.
 #
@@ -50,8 +50,8 @@ variants:
       - protobuf/3.21.12
     sil:
       platforms:
-        - build: vs2022
-        # - build: vs2022_debug      # <- illustrative only: no debug preset
+        - build: vs2026
+        # - build: vs2026_debug      # <- illustrative only: no debug preset
         #                            #    exists yet in CMakePresets.json
         # - build: aarch64_qcc_qnx   # <- illustrative only: needs its own
         #                            #    build.bat target + toolchain file
@@ -68,4 +68,4 @@ variants:
       - protobuf/3.21.12
     sil:
       platforms:
-        - build: vs2022
+        - build: vs2026

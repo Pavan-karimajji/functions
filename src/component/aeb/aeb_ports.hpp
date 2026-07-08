@@ -7,7 +7,7 @@
 #include "Aeb__Outputs/aeb_hyp_reaction.pb.h"
 #include "common/comp_state.pb.h"
 
-namespace adas::functions {
+namespace adas::df {
 
 // AEB's require-ports (plan.md §5.6). "objects", never "tracks".
 struct AebReqPorts {
@@ -23,4 +23,4 @@ struct AebProPorts {
   ProPort<adas::functions::CompState>      compState;
 };
 
-}  // namespace adas::functions
+}  // namespace adas::df

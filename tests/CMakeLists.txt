@@ -17,8 +17,8 @@ endif()
 
 set(DF_TEST_SOURCES
     unit/common/framework/test_ports.cpp
-    unit/common/framework/test_function_params.cpp
-    unit/common/framework/test_function_runner.cpp
+    unit/common/framework/test_df_params.cpp
+    unit/common/framework/test_df_runner.cpp
     unit/sil/test_param_loader.cpp   # ungated: ParamLoader doesn't depend on ENABLED_FUNCTIONS
 )
 

@@ -2,11 +2,11 @@
 
 #include "component/aeb/aeb_function.hpp"
 
-namespace adas::functions {
+namespace adas::df {
 namespace {
 
-FunctionParams testParams() {
-  return FunctionParams(YAML::Load(
+DfParams testParams() {
+  return DfParams(YAML::Load(
       "AEB_MAX_AGE_OBJECTS_S: 0.2\n"
       "AEB_MAX_AGE_EGO_DYN_S: 0.2\n"));
 }
@@ -86,4 +86,4 @@ TEST(AebFunctionTest, HypReactionAlwaysPublishedWithNoStageActive) {
 }
 
 }  // namespace
-}  // namespace adas::functions
+}  // namespace adas::df

@@ -8,7 +8,7 @@ endif()
 
 # Compile-time function selection (plan.md item 2). Functions graduate onto
 # this list once their real port skeleton lands (aeb since Step 4).
-# Override for testing: cmake --preset sil-vs2022 -DENABLED_FUNCTIONS="aeb;acc"
+# Override for testing: cmake --preset sil-vs2026 -DENABLED_FUNCTIONS="aeb;acc"
 if(NOT DEFINED ENABLED_FUNCTIONS)
     set(ENABLED_FUNCTIONS "aeb" CACHE STRING "Semicolon-separated list of enabled functions, e.g. \"aeb;acc\"")
 endif()

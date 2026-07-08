@@ -2,25 +2,25 @@
 
 #include "param_loader.hpp"
 
-namespace adas::functions {
+namespace adas::df {
 namespace {
 
 // ADAS_DF_TEST_FIXTURE_DIR/ADAS_DF_PROJECTS_DIR are injected by
 // tests/CMakeLists.txt.
-constexpr auto kFunctionParamsFixture = ADAS_DF_TEST_FIXTURE_DIR "/function_params_test.yaml";
+constexpr auto kDfParamsFixture = ADAS_DF_TEST_FIXTURE_DIR "/df_params_test.yaml";
 constexpr auto kEgoParamsFixture = ADAS_DF_TEST_FIXTURE_DIR "/ego_params_test.yaml";
 constexpr auto kBaseDefault = ADAS_DF_PROJECTS_DIR "/base/default.yaml";
 constexpr auto kProjAlphaDefault = ADAS_DF_PROJECTS_DIR "/proj_alpha/default.yaml";
 
 TEST(ParamLoaderTest, SectionReadsExistingKeyFromNamedSection) {
-  ParamLoader loader(kFunctionParamsFixture);
-  FunctionParams aeb = loader.section("aeb");
+  ParamLoader loader(kDfParamsFixture);
+  DfParams aeb = loader.section("aeb");
   EXPECT_DOUBLE_EQ(aeb.get<double>("AEB_MAX_AGE_OBJECTS_S", -1.0), 0.2);
 }
 
 TEST(ParamLoaderTest, SectionMissingSectionFallsBackToCallerDefault) {
-  ParamLoader loader(kFunctionParamsFixture);
-  FunctionParams acc = loader.section("acc");  // fixture has no "acc:" section
+  ParamLoader loader(kDfParamsFixture);
+  DfParams acc = loader.section("acc");  // fixture has no "acc:" section
   EXPECT_DOUBLE_EQ(acc.get<double>("ANYTHING", 7.0), 7.0);
 }
 
@@ -56,10 +56,10 @@ TEST(ParamLoaderTest, BaseAndProjAlphaLoadDifferentAebCalibration) {
 
 TEST(ParamLoaderTest, RealBaseFileMatchesFormerConfigDefaultYamlValues) {
   ParamLoader base(kBaseDefault);
-  FunctionParams aeb = base.section("aeb");
+  DfParams aeb = base.section("aeb");
   EXPECT_DOUBLE_EQ(aeb.get<double>("AEB_MAX_AGE_OBJECTS_S", -1.0), 0.2);
   EXPECT_DOUBLE_EQ(aeb.get<double>("AEB_MAX_AGE_EGO_DYN_S", -1.0), 0.2);
 }
 
 }  // namespace
-}  // namespace adas::functions
+}  // namespace adas::df

@@ -2,19 +2,19 @@
 
 #include <vector>
 
-#include "component/common/framework/function_runner.hpp"
+#include "component/common/framework/df_runner.hpp"
 
-namespace adas::functions {
+namespace adas::df {
 namespace {
 
-// Fake IFunction that records its own id into a shared vector on each exec() —
+// Fake IDfFunction that records its own id into a shared vector on each exec() —
 // enough to assert both "registration order == exec order" and "every
 // registered function runs each tick", without needing a real function.
-class RecordingFunction final : public IFunction {
+class RecordingFunction final : public IDfFunction {
  public:
   RecordingFunction(int id, std::vector<int>& execLog) : id_(id), execLog_(execLog) {}
 
-  void init(const FunctionParams&) override {}
+  void init(const DfParams&) override {}
   void exec(double) override { execLog_.push_back(id_); }
   const adas::functions::CompState& compState() const override { return compState_; }
 
@@ -24,13 +24,13 @@ class RecordingFunction final : public IFunction {
   adas::functions::CompState compState_;
 };
 
-TEST(FunctionRunnerTest, ExecutesRegisteredFunctionsInRegistrationOrder) {
+TEST(DfRunnerTest, ExecutesRegisteredFunctionsInRegistrationOrder) {
   std::vector<int> execLog;
   RecordingFunction first(1, execLog);
   RecordingFunction second(2, execLog);
   RecordingFunction third(3, execLog);
 
-  FunctionRunner runner;
+  DfRunner runner;
   runner.registerFunction(first);
   runner.registerFunction(second);
   runner.registerFunction(third);
@@ -40,11 +40,11 @@ TEST(FunctionRunnerTest, ExecutesRegisteredFunctionsInRegistrationOrder) {
   EXPECT_EQ(execLog, (std::vector<int>{1, 2, 3}));
 }
 
-TEST(FunctionRunnerTest, ExecRunsEveryRegisteredFunctionOnEachTick) {
+TEST(DfRunnerTest, ExecRunsEveryRegisteredFunctionOnEachTick) {
   std::vector<int> execLog;
   RecordingFunction only(1, execLog);
 
-  FunctionRunner runner;
+  DfRunner runner;
   runner.registerFunction(only);
   runner.exec(0.05);
   runner.exec(0.05);
@@ -53,4 +53,4 @@ TEST(FunctionRunnerTest, ExecRunsEveryRegisteredFunctionOnEachTick) {
 }
 
 }  // namespace
-}  // namespace adas::functions
+}  // namespace adas::df
