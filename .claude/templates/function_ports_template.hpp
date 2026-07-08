@@ -1,4 +1,4 @@
-// Template: new function component in modules/functions (plan.md §5.6)
+// Template: new function component in modules/df (plan.md §5.6)
 // Replace <Fn>/<fn> with the function name (e.g. Acc/acc). File names snake_case:
 //   src/component/<fn>/<fn>_ports.hpp, <fn>_function.hpp, <fn>_function.cpp
 // Naming rules: .claude/skills/naming_conventions.md ("objects" never "tracks").

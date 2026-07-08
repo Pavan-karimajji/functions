@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "functions_interface_c.h"
+#include "df_interface_c.h"
 
 #include "PerceptionCore__Outputs/gen_object_list.pb.h"
 #include "VehSigProvider__Outputs/veh_dyn.pb.h"
@@ -22,11 +22,11 @@ std::vector<uint8_t> serialize(const google::protobuf::Message& msg) {
 }  // namespace
 
 TEST(InterfaceCApiTest, ApiVersionIsStable) {
-  EXPECT_EQ(fnApiVersion(), 1);
+  EXPECT_EQ(dfApiVersion(), 1);
 }
 
 TEST(InterfaceCApiTest, RoundTripReportsRunningAndNeutralHypReaction) {
-  void* handle = fnInit("");  // empty path -> ParamLoader falls back to AebFunction's own defaults
+  void* handle = dfInit("");  // empty path -> ParamLoader falls back to AebFunction's own defaults
   ASSERT_NE(handle, nullptr);
 
   adas::perception::GenObjectList objectsMsg;  // empty list — only freshness is checked at this step
@@ -34,15 +34,15 @@ TEST(InterfaceCApiTest, RoundTripReportsRunningAndNeutralHypReaction) {
   auto objectsBytes = serialize(objectsMsg);
   auto egoDynBytes = serialize(egoDynMsg);
 
-  FnReqBuf objects{objectsBytes.data(), objectsBytes.size(), 0.05, 1};
-  FnReqBuf egoDyn{egoDynBytes.data(), egoDynBytes.size(), 0.05, 1};
+  DfReqBuf objects{objectsBytes.data(), objectsBytes.size(), 0.05, 1};
+  DfReqBuf egoDyn{egoDynBytes.data(), egoDynBytes.size(), 0.05, 1};
 
   std::vector<uint8_t> hypReactionBuf(256);
   std::vector<uint8_t> compStateBuf(256);
-  FnProBuf hypReaction{hypReactionBuf.data(), hypReactionBuf.size(), 0, 0};
-  FnProBuf compState{compStateBuf.data(), compStateBuf.size(), 0, 0};
+  DfProBuf hypReaction{hypReactionBuf.data(), hypReactionBuf.size(), 0, 0};
+  DfProBuf compState{compStateBuf.data(), compStateBuf.size(), 0, 0};
 
-  EXPECT_EQ(fnExec(handle, 0.05, &objects, &egoDyn, &hypReaction, &compState), 1);
+  EXPECT_EQ(dfExec(handle, 0.05, &objects, &egoDyn, &hypReaction, &compState), 1);
 
   adas::functions::CompState state;
   ASSERT_TRUE(state.ParseFromArray(compStateBuf.data(), static_cast<int>(compState.len)));
@@ -57,24 +57,24 @@ TEST(InterfaceCApiTest, RoundTripReportsRunningAndNeutralHypReaction) {
   EXPECT_FALSE(reaction.b_pre_brake_active());
   EXPECT_TRUE(hypReaction.updated);
 
-  fnShutdown(handle);
+  dfShutdown(handle);
 }
 
 TEST(InterfaceCApiTest, MissingInputsReportError) {
-  void* handle = fnInit("");
+  void* handle = dfInit("");
   ASSERT_NE(handle, nullptr);
 
   std::vector<uint8_t> hypReactionBuf(256);
   std::vector<uint8_t> compStateBuf(256);
-  FnProBuf hypReaction{hypReactionBuf.data(), hypReactionBuf.size(), 0, 0};
-  FnProBuf compState{compStateBuf.data(), compStateBuf.size(), 0, 0};
+  DfProBuf hypReaction{hypReactionBuf.data(), hypReactionBuf.size(), 0, 0};
+  DfProBuf compState{compStateBuf.data(), compStateBuf.size(), 0, 0};
 
   // objects/egoDyn both null -> "never received this tick"
-  EXPECT_EQ(fnExec(handle, 0.05, nullptr, nullptr, &hypReaction, &compState), 1);
+  EXPECT_EQ(dfExec(handle, 0.05, nullptr, nullptr, &hypReaction, &compState), 1);
 
   adas::functions::CompState state;
   ASSERT_TRUE(state.ParseFromArray(compStateBuf.data(), static_cast<int>(compState.len)));
   EXPECT_EQ(state.state(), adas::functions::CompState::ERROR);
 
-  fnShutdown(handle);
+  dfShutdown(handle);
 }

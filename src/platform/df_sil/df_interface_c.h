@@ -1,17 +1,17 @@
-#ifndef ADAS_FUNCTIONS_INTERFACE_C_H_
-#define ADAS_FUNCTIONS_INTERFACE_C_H_
+#ifndef ADAS_DF_INTERFACE_C_H_
+#define ADAS_DF_INTERFACE_C_H_
 
 #include <stddef.h>
 #include <stdint.h>
 
 #if defined(_WIN32)
-  #if defined(FUNCTIONS_SIL_EXPORTS)
-    #define FN_API __declspec(dllexport)
+  #if defined(DF_SIL_EXPORTS)
+    #define DF_API __declspec(dllexport)
   #else
-    #define FN_API __declspec(dllimport)
+    #define DF_API __declspec(dllimport)
   #endif
 #else
-  #define FN_API
+  #define DF_API
 #endif
 
 #ifdef __cplusplus
@@ -24,7 +24,7 @@ typedef struct {
   size_t len;
   double ageS;
   int valid;   /* 0/1 */
-} FnReqBuf;
+} DfReqBuf;
 
 /* Provide-port buffer: caller-owned output storage (cap bytes); we fill up to len. */
 typedef struct {
@@ -32,29 +32,29 @@ typedef struct {
   size_t cap;
   size_t len;
   int updated;   /* 0/1 */
-} FnProBuf;
+} DfProBuf;
 
-/* Monotonic version, bumped whenever fnExec's signature/buffer semantics change (§5.8 item 2). */
-FN_API int fnApiVersion(void);
+/* Monotonic version, bumped whenever dfExec's signature/buffer semantics change (§5.8 item 2). */
+DF_API int dfApiVersion(void);
 
 /* configPath: path to a YAML file shaped like projects/base/default.yaml (or any
    other project's default.yaml, e.g. projects/proj_alpha/default.yaml — same
    shape, different calibration numbers). Returns NULL on error. */
-FN_API void* fnInit(const char* configPath);
+DF_API void* dfInit(const char* configPath);
 
 /* One cycle. objects/egoDyn: serialized GenObjectList/VehDyn (NULL if not received this tick).
    hypReaction/compState: caller-allocated output buffers (NULL if that output isn't wanted).
    Returns 1 on success, 0 on failure (e.g. null handle, output buffer too small). */
-FN_API int fnExec(void* handle, double dtS,
-                     const FnReqBuf* objects,
-                     const FnReqBuf* egoDyn,
-                     FnProBuf* hypReaction,
-                     FnProBuf* compState);
+DF_API int dfExec(void* handle, double dtS,
+                     const DfReqBuf* objects,
+                     const DfReqBuf* egoDyn,
+                     DfProBuf* hypReaction,
+                     DfProBuf* compState);
 
-FN_API void fnShutdown(void* handle);
+DF_API void dfShutdown(void* handle);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  /* ADAS_FUNCTIONS_INTERFACE_C_H_ */
+#endif  /* ADAS_DF_INTERFACE_C_H_ */

@@ -6,13 +6,13 @@
 #include "component/common/framework/function_params.hpp"
 
 #if defined(_WIN32)
-  #if defined(FUNCTIONS_SIL_EXPORTS)
-    #define FUNCTIONS_SIL_API __declspec(dllexport)
+  #if defined(DF_SIL_EXPORTS)
+    #define DF_SIL_API __declspec(dllexport)
   #else
-    #define FUNCTIONS_SIL_API __declspec(dllimport)
+    #define DF_SIL_API __declspec(dllimport)
   #endif
 #else
-  #define FUNCTIONS_SIL_API
+  #define DF_SIL_API
 #endif
 
 namespace adas::functions {
@@ -25,10 +25,10 @@ namespace adas::functions {
 // see plan.md §5.7 Step 3's correction.
 //
 // Exported (dllexport/dllimport) because test_param_loader.cpp links it
-// directly from a separate executable (functions_tests) against
-// functions_sil's import lib — previously only reached indirectly through
-// fnInit(), which is already extern "C" exported.
-class FUNCTIONS_SIL_API ParamLoader {
+// directly from a separate executable (df_tests) against
+// df_sil's import lib — previously only reached indirectly through
+// dfInit(), which is already extern "C" exported.
+class DF_SIL_API ParamLoader {
 public:
   explicit ParamLoader(const std::string& configPath);
 

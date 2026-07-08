@@ -6,8 +6,8 @@ import re
 import yaml
 
 
-class FunctionsConan(ConanFile):
-    name = "adas-functions"
+class DfConan(ConanFile):
+    name = "adas-df"
     package_type = "application"
 
     settings = "os", "arch", "compiler", "build_type"
@@ -35,7 +35,7 @@ class FunctionsConan(ConanFile):
     def set_version(self):
         cmakelists = Path(self.recipe_folder) / "CMakeLists.txt"
         content = cmakelists.read_text(encoding="utf-8")
-        match = re.search(r"project\(\s*adas-functions\s+VERSION\s+([0-9]+\.[0-9]+\.[0-9]+)", content, re.IGNORECASE)
+        match = re.search(r"project\(\s*adas-df\s+VERSION\s+([0-9]+\.[0-9]+\.[0-9]+)", content, re.IGNORECASE)
         if not match:
             raise RuntimeError("Could not extract VERSION from CMakeLists.txt")
         self.version = match.group(1)

@@ -1,4 +1,4 @@
-#include "functions_interface_c.h"
+#include "df_interface_c.h"
 
 #include <cstring>
 #include <iostream>
@@ -25,7 +25,7 @@ namespace {
 // well-defined and returns true — the host's own `valid` flag is the
 // authoritative "was something received" signal, not the pointer's nullness.
 template <typename T>
-void updateReqPort(adas::functions::ReqPort<T>& port, const FnReqBuf* buf) {
+void updateReqPort(adas::functions::ReqPort<T>& port, const DfReqBuf* buf) {
   if (buf != nullptr && buf->valid != 0 &&
       port.data.ParseFromArray(buf->data, static_cast<int>(buf->len))) {
     port.ageS = buf->ageS;
@@ -38,7 +38,7 @@ void updateReqPort(adas::functions::ReqPort<T>& port, const FnReqBuf* buf) {
 // Serializes msg into buf (if buf is non-null and big enough) and reports
 // `updated`. Returns false only on a genuine failure (buffer too small) —
 // buf == nullptr just means "caller doesn't want this output", not an error.
-bool writeProBuf(const google::protobuf::Message& msg, bool updated, FnProBuf* buf) {
+bool writeProBuf(const google::protobuf::Message& msg, bool updated, DfProBuf* buf) {
   if (buf == nullptr) {
     return true;
   }
@@ -54,9 +54,9 @@ bool writeProBuf(const google::protobuf::Message& msg, bool updated, FnProBuf* b
 }
 
 // The DLL's composition root state. Growing this struct (and the #ifdef
-// blocks in fnInit/fnExec below) is how a second function gets added —
+// blocks in dfInit/dfExec below) is how a second function gets added —
 // see add_function.md step 3.
-struct FnHandle {
+struct DfHandle {
 #ifdef ADAS_FN_AEB_ENABLED
   adas::functions::AebReqPorts aebReqPorts;
   adas::functions::AebProPorts aebProPorts;
@@ -69,14 +69,14 @@ struct FnHandle {
 
 extern "C" {
 
-int fnApiVersion(void) { return 1; }
+int dfApiVersion(void) { return 1; }
 
-void* fnInit(const char* configPath) {
+void* dfInit(const char* configPath) {
   // No exception ever crosses the extern "C" boundary (rule 12 / SWR-DLL-05) —
   // nothing here is known to throw today, this is defensive against a future
   // change, and mandatory for non-C++ hosts that couldn't catch one anyway.
   try {
-    auto* handle = new FnHandle();
+    auto* handle = new DfHandle();
     adas::functions::ParamLoader loader(configPath != nullptr ? configPath : "");
 
     // Placeholder: proves projects/base/ego_params.yaml reads end-to-end
@@ -103,13 +103,13 @@ void* fnInit(const char* configPath) {
   }
 }
 
-int fnExec(void* handleOpaque, double dtS,
-            const FnReqBuf* objects, const FnReqBuf* egoDyn,
-            FnProBuf* hypReaction, FnProBuf* compState) {
+int dfExec(void* handleOpaque, double dtS,
+            const DfReqBuf* objects, const DfReqBuf* egoDyn,
+            DfProBuf* hypReaction, DfProBuf* compState) {
   if (handleOpaque == nullptr) {
     return 0;
   }
-  auto* handle = static_cast<FnHandle*>(handleOpaque);
+  auto* handle = static_cast<DfHandle*>(handleOpaque);
 
   try {
 #ifdef ADAS_FN_AEB_ENABLED
@@ -133,9 +133,9 @@ int fnExec(void* handleOpaque, double dtS,
   }
 }
 
-void fnShutdown(void* handleOpaque) {
+void dfShutdown(void* handleOpaque) {
   try {
-    delete static_cast<FnHandle*>(handleOpaque);
+    delete static_cast<DfHandle*>(handleOpaque);
   } catch (...) {
     // Nothing more to do — swallow, per rule 12.
   }

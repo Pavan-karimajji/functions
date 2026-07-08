@@ -1,5 +1,5 @@
 ﻿cmake_minimum_required(VERSION 3.22)
-project(adas-functions VERSION 0.1.0 LANGUAGES CXX)
+project(adas-df VERSION 0.1.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 
 if(NOT DEFINED TARGET_TYPE)
@@ -14,7 +14,7 @@ if(NOT DEFINED ENABLED_FUNCTIONS)
 endif()
 
 # Which projects/<name> calibration folder to bake in as ADAS_EGO_PARAMS_PATH
-# (see src/platform/sil/CMakeLists.txt). Set by build.bat's third argument
+# (see src/platform/df_sil/CMakeLists.txt). Set by build.bat's third argument
 # (build.bat <part> <platform> <project>); override manually with
 # -DADAS_PROJECT=<name>.
 if(NOT DEFINED ADAS_PROJECT)
@@ -26,7 +26,7 @@ find_package(AdasInterfaces REQUIRED)
 add_subdirectory(src/component)
 
 if(TARGET_TYPE STREQUAL "sil")
-    add_subdirectory(src/platform/sil)
+    add_subdirectory(src/platform/df_sil)
 elseif(TARGET_TYPE STREQUAL "autosar")
     add_subdirectory(src/platform/autosar)
 elseif(TARGET_TYPE STREQUAL "standalone")

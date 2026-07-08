@@ -1,6 +1,6 @@
 # Illustrative example project — deliberately different values from
 # projects/base/default.yaml, not a real second vehicle program. Demonstrates
-# that fnInit(configPath) pointed at a project folder changes behavior.
+# that dfInit(configPath) pointed at a project folder changes behavior.
 
 aeb:
   AEB_TTC_BRAKE_THRESHOLD_S: 1.4

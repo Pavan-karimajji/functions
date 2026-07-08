@@ -5,12 +5,12 @@
 namespace adas::functions {
 namespace {
 
-// ADAS_FUNCTIONS_TEST_FIXTURE_DIR/ADAS_FUNCTIONS_PROJECTS_DIR are injected by
+// ADAS_DF_TEST_FIXTURE_DIR/ADAS_DF_PROJECTS_DIR are injected by
 // tests/CMakeLists.txt.
-constexpr auto kFunctionParamsFixture = ADAS_FUNCTIONS_TEST_FIXTURE_DIR "/function_params_test.yaml";
-constexpr auto kEgoParamsFixture = ADAS_FUNCTIONS_TEST_FIXTURE_DIR "/ego_params_test.yaml";
-constexpr auto kBaseDefault = ADAS_FUNCTIONS_PROJECTS_DIR "/base/default.yaml";
-constexpr auto kProjAlphaDefault = ADAS_FUNCTIONS_PROJECTS_DIR "/proj_alpha/default.yaml";
+constexpr auto kFunctionParamsFixture = ADAS_DF_TEST_FIXTURE_DIR "/function_params_test.yaml";
+constexpr auto kEgoParamsFixture = ADAS_DF_TEST_FIXTURE_DIR "/ego_params_test.yaml";
+constexpr auto kBaseDefault = ADAS_DF_PROJECTS_DIR "/base/default.yaml";
+constexpr auto kProjAlphaDefault = ADAS_DF_PROJECTS_DIR "/proj_alpha/default.yaml";
 
 TEST(ParamLoaderTest, SectionReadsExistingKeyFromNamedSection) {
   ParamLoader loader(kFunctionParamsFixture);
@@ -42,7 +42,7 @@ TEST(ParamLoaderTest, MissingFileFallsBackToCallerDefaultEverywhere) {
 
 // Real projects/base and projects/proj_alpha default.yaml files (not
 // synthetic fixtures) — proves the project-scoped calibration mechanism
-// (plan.md item 9, docs/project_scoped_params.md): pointing fnInit's
+// (plan.md item 9, docs/project_scoped_params.md): pointing dfInit's
 // configPath at a different project folder genuinely loads different
 // numbers, with zero merge/override logic (each file is a complete,
 // standalone set).

@@ -1,4 +1,4 @@
-﻿# functions_common: framework + shared algo. Always built regardless of ENABLED_FUNCTIONS.
+﻿# df_common: framework + shared algo. Always built regardless of ENABLED_FUNCTIONS.
 add_subdirectory(common)
 
 # Per-function static libs, gated by ENABLED_FUNCTIONS (plan.md item 2 compile-time
