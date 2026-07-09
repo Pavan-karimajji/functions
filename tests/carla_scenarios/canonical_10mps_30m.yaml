@@ -1,12 +1,13 @@
-# Bridge-only scenario config - never read by df (docs/df_carla_bridge_blueprint.md §6).
+# Named test case - default scenario, run with just: py -3.12 carla_bridge.py
+# (or explicitly: py -3.12 carla_bridge.py ../../tests/carla_scenarios/canonical_10mps_30m.yaml)
 #
-# Canonical AEB test case (docs/df_carla_bridge_blueprint.md §10 "Test
+# Canonical AEB test case (docs/df_carla_bridge_blueprint.md §11 "Test
 # methodology" - phase 1, test case design): ego 10 m/s, stationary target,
 # 30m initial gap. TTC = distance / 10; base project's
 # AEB_TTC_PRE_WARNING_THRESHOLD_S=1.0 -> b_latent_pre_warning_active fires
 # once distance drops below 10m (closes from 30m in 2.0s, fires at 2.0s,
 # reaches the 2m stop distance 0.8s after that - short and deliberate, not
-# tuned for watchability like the earlier 60m/5m/s run was).
+# tuned for watchability like watchable_5mps_60m.yaml).
 
 carla:
   host: 127.0.0.1
@@ -37,26 +38,18 @@ lead:
   initial_gap_m: 30.0
   speed_mps: 0.0
 
-# Range within which other actors are mapped into GenObjectList (blueprint §4 item 3).
+# Range within which other actors are mapped into GenObjectList.
 object_range_m: 100.0
 
-# GenObjectList ALWAYS has exactly this many GenObjects (user's explicit call,
-# 2026-07-09: "at any point functions should get 50 objects") - matches the
-# original gen1 reference's fixed-array shape (aObject[EM_N_OBJECTS]), just
-# enforced here in the bridge rather than as a C array. Real, in-range
-# targets fill the nearest slots first; the rest are default-constructed
-# (all-zero) padding, which AebFunction::exec()'s eligibility check already
-# ignores (f_dist_x=0 fails dx > 0.0f) - no df/interfaces change needed.
+# GenObjectList ALWAYS has exactly this many GenObjects - matches the
+# original gen1 reference's fixed-array shape (aObject[EM_N_OBJECTS]). Real,
+# in-range targets fill the nearest slots first; the rest are
+# default-constructed (all-zero) padding, which AebFunction::exec()'s
+# eligibility check already ignores (f_dist_x=0 fails dx > 0.0f).
 num_object_slots: 50
 
-# df config/DLL paths: leave null to use carla_bridge.py's computed defaults
-# (projects/base/default.yaml, build-sil-vs2026's df_sil.dll Release build) -
-# override only if you built a different preset/project.
-#
-# TEMPORARY DEBUG OVERRIDE (2026-07-09): pointed at the Debug build (built
-# with full symbols, see docs/df_carla_bridge_blueprint.md) so Visual Studio's
-# Attach to Process can hit breakpoints in aeb_function.cpp/df_interface_c.cpp.
-# Set back to null for normal (faster, optimized) runs once done debugging.
+# Leave null to use carla_bridge.py's computed defaults (projects/base/default.yaml,
+# build-sil-vs2026's df_sil.dll Release build).
 df:
   config_path: null
-  dll_path: "C:\\ws\\repo\\1v-superproject\\modules\\df\\build-sil-vs2026\\src\\platform\\df_sil\\Debug\\df_sil.dll"
+  dll_path: null

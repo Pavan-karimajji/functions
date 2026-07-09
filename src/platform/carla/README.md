@@ -49,15 +49,39 @@ placeholders elsewhere in this repo).
    for the server window to finish loading (~30s) before continuing.
 2. **Run the bridge:**
    ```
-   py -3.12 carla_bridge.py
+   py -3.12 carla_bridge.py                        # canonical test case (default)
+   py -3.12 carla_bridge.py watchable_5mps_60m.yaml # or a different named test case
    ```
    Spawns an ego vehicle at a real map spawn point and a stationary lead
-   vehicle 60 m ahead along the same lane (per `scenario.yaml`, `Town04`),
-   points the CARLA viewport at the ego vehicle, waits 5 seconds (switch to
-   the CARLA window now), then closes the gap at 5 m/s (~12.7 s total,
-   deliberately slow enough to actually watch) while printing `df`'s
-   `AebOutputs` (`pre_warning`/`critical_obj_id`) twice a second, until the
-   ego closes to within 2 m of the lead vehicle.
+   vehicle ahead along the same lane, points the CARLA viewport at both
+   vehicles, waits 5 seconds (switch to the CARLA window now), then closes
+   the gap while printing `df`'s `AebOutputs` (`ttc`/`pre_warning`/
+   `critical_obj_id`) twice a second, until the ego closes to within 2 m of
+   the lead vehicle.
+
+## Repeating multiple test cases
+
+Scenario YAMLs are test data, not binding code - they live in
+`../../../tests/carla_scenarios/` (sibling to this repo's `tests/unit/` gtest
+tree), not alongside the `.py` files here. Changing/adding a test case never
+touches this folder at all, only that one. `carla_bridge.py` takes an
+optional scenario argument (default `canonical_10mps_30m.yaml`); a bare
+filename resolves against `tests/carla_scenarios/` automatically:
+
+```
+py -3.12 carla_bridge.py                        # tests/carla_scenarios/canonical_10mps_30m.yaml
+py -3.12 carla_bridge.py watchable_5mps_60m.yaml # tests/carla_scenarios/watchable_5mps_60m.yaml
+py -3.12 carla_bridge.py C:\path\to\anywhere.yaml # used as-is if it's an absolute/existing path
+```
+
+- `canonical_10mps_30m.yaml` - the phase-1/2/3-verified canonical AEB test
+  case (docs/df_carla_bridge_blueprint.md §11): ego 10 m/s, stationary
+  target, 30m gap, fires below 10m, ~3s run.
+- `watchable_5mps_60m.yaml` - slower/longer-gap version (~13s run), used
+  while verifying the bridge itself works visually.
+
+Add more by copying one of these into `tests/carla_scenarios/` and changing
+the numbers - each is self-contained (no shared/inherited config).
 
 ## Logical architecture / sequence
 
@@ -113,8 +137,8 @@ without the DLL itself ever changing.
 - `carla_bridge.py` - main loop: connect, async tick, map actors, call `dfExec`, log
 - `df_ctypes.py` - `ctypes` mirror of `../df_sil/df_interface_c.h`
 - `frame_convert.py` - CARLA world frame -> ego-fixed frame (rear-axle-origin, `+x` forward, `+y` left)
-- `scenario.yaml` - bridge-only scenario config (never read by `df`)
 - `requirements.txt` - Python dependencies (`carla` itself installed from CARLA's own wheel, see above)
+- `../../../tests/carla_scenarios/` - scenario YAML test data (never read by `df`), see "Repeating multiple test cases" above
 
 ## Known issues (confirmed on this machine/CARLA build - see `C:\ws\repo\bumpEstimate\.claude\carla.md` for the full writeup)
 

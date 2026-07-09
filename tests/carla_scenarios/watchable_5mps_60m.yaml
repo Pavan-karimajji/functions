@@ -1,0 +1,29 @@
+# Named test case - run with: py -3.12 carla_bridge.py ../../tests/carla_scenarios/watchable_5mps_60m.yaml
+#
+# Slower, longer-gap version of the canonical test case (canonical_10mps_30m.yaml)
+# - deliberately tuned for watchability (~13s run, not ~3s), used while
+# verifying the CARLA bridge itself works visually (camera framing, vehicles
+# on the ground, etc. - docs/df_carla_bridge_blueprint.md §12).
+# TTC = distance / 5; fires once distance drops below 5m.
+
+carla:
+  host: 127.0.0.1
+  port: 2000
+  map: Town04
+
+ego:
+  blueprint: vehicle.tesla.model3
+  spawn_point_index: 184
+  speed_mps: 5.0
+
+lead:
+  blueprint: vehicle.tesla.model3
+  initial_gap_m: 60.0
+  speed_mps: 0.0
+
+object_range_m: 100.0
+num_object_slots: 50
+
+df:
+  config_path: null
+  dll_path: null

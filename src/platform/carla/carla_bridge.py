@@ -12,10 +12,17 @@ known issue, not specific to this bridge). `world.wait_for_tick()` is the
 async-mode equivalent - it blocks until the server's next tick and returns
 that tick's snapshot, giving the same per-tick pacing without the hang.
 
-Run: `py -3.12 carla_bridge.py` with a CARLA server already running (see
-README.md for server launch flags - `-vulkan`, administrator, on this machine).
+Run: `py -3.12 carla_bridge.py [scenario_name]` with a CARLA server already
+running (see README.md for server launch flags - `-vulkan`, administrator, on
+this machine). Omit the argument to run the canonical test case; pass a bare
+filename (e.g. `watchable_5mps_60m.yaml`) to run a different named test case
+instead - all scenario YAMLs live in ../../../tests/carla_scenarios/ (test
+data, not binding code - see docs/df_carla_bridge_blueprint.md §15), a bare
+name or filename resolves there automatically. A full/relative path is used
+as-is if you want a scenario file somewhere else entirely.
 """
 
+import argparse
 import math
 import sys
 import time
@@ -31,6 +38,12 @@ DF_ROOT = THIS_DIR.parents[2]          # carla -> platform -> src -> df
 MODULES_ROOT = DF_ROOT.parent          # modules/
 INTERFACES_GENERATED_PY = MODULES_ROOT / "interfaces" / "build" / "generated_py"
 DEFAULT_DLL_PATH = DF_ROOT / "build-sil-vs2026" / "src" / "platform" / "df_sil" / "Release" / "df_sil.dll"
+# Scenario YAMLs are test data, not binding code - they live under tests/,
+# not alongside this script (docs/df_carla_bridge_blueprint.md §15, user's
+# call: scenario configs multiply as test cases are added, and shouldn't
+# clutter the binding code's own folder).
+CARLA_SCENARIOS_DIR = DF_ROOT / "tests" / "carla_scenarios"
+DEFAULT_SCENARIO_NAME = "canonical_10mps_30m.yaml"
 DEFAULT_CONFIG_PATH = DF_ROOT / "projects" / "base" / "default.yaml"
 
 MAX_SCENARIO_TIME_S = 60.0  # safety cap on elapsed real time - a misconfigured
@@ -434,5 +447,23 @@ def run(scenario_path: Path) -> None:
         print("[carla_bridge] dfShutdown OK, actors destroyed")
 
 
+def _resolve_scenario_arg(raw: str) -> Path:
+    """A bare filename resolves against tests/carla_scenarios/ (test data,
+    not binding code - see CARLA_SCENARIOS_DIR comment) regardless of the
+    caller's cwd, same robustness reasoning as DEFAULT_DLL_PATH/
+    DEFAULT_CONFIG_PATH. An absolute or otherwise-existing relative path is
+    used as-is, for a scenario file kept somewhere else entirely."""
+    path = Path(raw)
+    if path.is_absolute() or path.exists():
+        return path
+    candidate = CARLA_SCENARIOS_DIR / path
+    return candidate if candidate.exists() else path
+
+
 if __name__ == "__main__":
-    run(THIS_DIR / "scenario.yaml")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("scenario", nargs="?", default=DEFAULT_SCENARIO_NAME,
+                         help="Scenario YAML - bare filename resolves against "
+                              f"tests/carla_scenarios/. Default: {DEFAULT_SCENARIO_NAME}")
+    args = parser.parse_args()
+    run(_resolve_scenario_arg(args.scenario))
