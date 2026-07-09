@@ -266,11 +266,26 @@ def draw_aeb_indicator(world: "carla.World", lead_actor: "carla.Actor", pre_warn
 
 
 def build_gen_object_list(ego_actor: "carla.Actor", ego_speed_mps: float,
-                           targets: list, object_range_m: float) -> "gen_object_list_pb2.GenObjectList":
+                           targets: list, object_range_m: float,
+                           num_object_slots: int) -> "gen_object_list_pb2.GenObjectList":
+    """Always returns exactly num_object_slots GenObjects - matching the
+    original gen1 reference's fixed-array shape (aObject[EM_N_OBJECTS]),
+    just enforced here rather than as a C array (user's explicit call,
+    2026-07-09: "at any point functions should get 50 objects", not a
+    variable-length list that just happens to be small in this scenario).
+
+    Real, in-range targets fill the nearest slots first (sorted by distance -
+    if there are ever more real targets than slots, the nearest ones are kept,
+    since those are the ones that matter for AEB); any remaining slots are
+    padded with default-constructed (all-zero) GenObjects. A zero-valued
+    GenObject has f_dist_x=0, which already fails AebFunction::exec()'s
+    eligibility check (dx > 0.0f), so padding slots are inert - df needs no
+    changes to accept this.
+    """
     ego_t = ego_actor.get_transform()
     ego_vx, ego_vy = velocity_world(ego_t.rotation.yaw, ego_speed_mps)
 
-    objects_msg = gen_object_list_pb2.GenObjectList()
+    in_range = []
     for actor, speed_mps in targets:
         t = actor.get_transform()
         distance = ego_t.location.distance(t.location)
@@ -281,12 +296,20 @@ def build_gen_object_list(ego_actor: "carla.Actor", ego_speed_mps: float,
             ego_t.location.x, ego_t.location.y, ego_t.rotation.yaw, ego_vx, ego_vy,
             t.location.x, t.location.y, vx, vy,
         )
+        in_range.append((distance, actor.id, rel))
+    in_range.sort(key=lambda item: item[0])  # nearest first
+
+    objects_msg = gen_object_list_pb2.GenObjectList()
+    for _distance, actor_id, rel in in_range[:num_object_slots]:
         obj = objects_msg.objects.add()
         obj.kinematic.f_dist_x = rel.dist_x
         obj.kinematic.f_dist_y = rel.dist_y
         obj.kinematic.f_vrel_x = rel.vrel_x
         obj.kinematic.f_vrel_y = rel.vrel_y
-        obj.general.ui_id = actor.id
+        obj.general.ui_id = actor_id
+    while len(objects_msg.objects) < num_object_slots:
+        objects_msg.objects.add()  # default-constructed: all-zero, inert padding
+
     return objects_msg
 
 
@@ -359,6 +382,7 @@ def run(scenario_path: Path) -> None:
                 ego_actor, ego_cfg["speed_mps"],
                 [(lead_actor, lead_cfg["speed_mps"])],
                 scenario["object_range_m"],
+                scenario["num_object_slots"],
             )
             ego_dyn_msg = veh_dyn_pb2.VehDyn()  # unread by CV-TTC this increment; freshness is what matters
 

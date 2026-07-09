@@ -40,9 +40,23 @@ lead:
 # Range within which other actors are mapped into GenObjectList (blueprint §4 item 3).
 object_range_m: 100.0
 
+# GenObjectList ALWAYS has exactly this many GenObjects (user's explicit call,
+# 2026-07-09: "at any point functions should get 50 objects") - matches the
+# original gen1 reference's fixed-array shape (aObject[EM_N_OBJECTS]), just
+# enforced here in the bridge rather than as a C array. Real, in-range
+# targets fill the nearest slots first; the rest are default-constructed
+# (all-zero) padding, which AebFunction::exec()'s eligibility check already
+# ignores (f_dist_x=0 fails dx > 0.0f) - no df/interfaces change needed.
+num_object_slots: 50
+
 # df config/DLL paths: leave null to use carla_bridge.py's computed defaults
-# (projects/base/default.yaml, build-sil-vs2026's df_sil.dll) - override only
-# if you built a different preset/project.
+# (projects/base/default.yaml, build-sil-vs2026's df_sil.dll Release build) -
+# override only if you built a different preset/project.
+#
+# TEMPORARY DEBUG OVERRIDE (2026-07-09): pointed at the Debug build (built
+# with full symbols, see docs/df_carla_bridge_blueprint.md) so Visual Studio's
+# Attach to Process can hit breakpoints in aeb_function.cpp/df_interface_c.cpp.
+# Set back to null for normal (faster, optimized) runs once done debugging.
 df:
   config_path: null
-  dll_path: null
+  dll_path: "C:\\ws\\repo\\1v-superproject\\modules\\df\\build-sil-vs2026\\src\\platform\\df_sil\\Debug\\df_sil.dll"
