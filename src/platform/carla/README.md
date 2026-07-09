@@ -79,6 +79,10 @@ py -3.12 carla_bridge.py C:\path\to\anywhere.yaml # used as-is if it's an absolu
   target, 30m gap, fires below 10m, ~3s run.
 - `watchable_5mps_60m.yaml` - slower/longer-gap version (~13s run), used
   while verifying the bridge itself works visually.
+- `closing_ego20mps_lead10mps_30m.yaml` - both-moving closing case (ego
+  20 m/s, lead 10 m/s, same 10 m/s closing speed/TTC math as the canonical
+  case), proving `vrel_x` is correct between two moving actors, not just
+  against a stationary target.
 
 Add more by copying one of these into `tests/carla_scenarios/` and changing
 the numbers - each is self-contained (no shared/inherited config).

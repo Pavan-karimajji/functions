@@ -1,0 +1,47 @@
+# Named test case: py -3.12 carla_bridge.py closing_ego20mps_lead10mps_30m.yaml
+#
+# Both-moving closing case (docs/df_carla_bridge_blueprint.md §11 "Test
+# methodology" - phase 1, test case design). Distinguishes itself from
+# canonical_10mps_30m.yaml (stationary target) by giving the lead vehicle a
+# nonzero speed too, so vrel_x is exercised as (lead velocity - ego velocity)
+# between two moving actors, not (0 - ego velocity) against a stationary one.
+#
+# Ego 20 m/s, lead 10 m/s (same direction, same lane) -> closing speed
+# 10 m/s, same as the canonical case's arithmetic: TTC = distance / 10.
+# base project's AEB_TTC_PRE_WARNING_THRESHOLD_S=1.0 ->
+# b_latent_pre_warning_active fires once distance drops below 10m (closes
+# from 30m in 2.0s), reaches the 2m stop distance 0.8s after that.
+
+carla:
+  host: 127.0.0.1
+  port: 2000
+  map: Town04          # long straight highway segments
+  # No dt_s here - carla_bridge.py paces itself against real wall-clock time
+  # (TARGET_HZ), not a configured nominal step.
+
+ego:
+  blueprint: vehicle.tesla.model3
+  # Same spawn point as canonical_10mps_30m.yaml - verified 150m of
+  # uninterrupted same-road/lane travel, well clear of both vehicles'
+  # traveled distance in this run's ~2.8s duration.
+  spawn_point_index: 184
+  speed_mps: 20.0
+
+# Spawned initial_gap_m ahead of ego along the same road (waypoint.next()).
+lead:
+  blueprint: vehicle.tesla.model3
+  initial_gap_m: 30.0
+  speed_mps: 10.0
+
+# Range within which other actors are mapped into GenObjectList.
+object_range_m: 100.0
+
+# GenObjectList ALWAYS has exactly this many GenObjects - see
+# canonical_10mps_30m.yaml for the padding rationale.
+num_object_slots: 50
+
+# Leave null to use carla_bridge.py's computed defaults (projects/base/default.yaml,
+# build-sil-vs2026's df_sil.dll Release build).
+df:
+  config_path: null
+  dll_path: null
