@@ -13,7 +13,7 @@ void* dfInit(const char* configPath);   /* NULL on error */
 int   dfExec(void* handle, double dtS,
               const DfReqBuf* objects,  /* serialized GenObjectList */
               const DfReqBuf* egoDyn,   /* serialized VehDyn        */
-              DfProBuf* hypReaction,    /* out: serialized AebHypReaction */
+              DfProBuf* aebOutputs,     /* out: serialized AebOutputs */
               DfProBuf* compState);     /* out: serialized CompState  */
 void  dfShutdown(void* handle);
 ```

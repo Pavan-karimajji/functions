@@ -16,12 +16,12 @@ class RecordingFunction final : public IDfFunction {
 
   void init(const DfParams&) override {}
   void exec(double) override { execLog_.push_back(id_); }
-  const adas::functions::CompState& compState() const override { return compState_; }
+  const adas::df::CompState& compState() const override { return compState_; }
 
  private:
   int id_;
   std::vector<int>& execLog_;
-  adas::functions::CompState compState_;
+  adas::df::CompState compState_;
 };
 
 TEST(DfRunnerTest, ExecutesRegisteredFunctionsInRegistrationOrder) {

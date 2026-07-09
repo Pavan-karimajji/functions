@@ -12,7 +12,7 @@
 // on ports (sensor-agnostic constraint, plan.md item 2).
 #include "PerceptionCore__Outputs/gen_object_list.pb.h"  // adas::perception::GenObjectList
 #include "VehSigProvider__Outputs/veh_dyn.pb.h"           // adas::common::VehDyn
-#include "common/comp_state.pb.h"                        // adas::functions::CompState
+#include "common/comp_state.pb.h"                        // adas::df::CompState
 
 namespace adas::df {
 
@@ -25,8 +25,8 @@ struct <Fn>ReqPorts {
 
 // Provide-ports: what this function produces. compState is mandatory (heartbeat).
 struct <Fn>ProPorts {
-  // ProPort<adas::functions::XyzOutput> xyzOutput;  // function-level output(s)
-  ProPort<adas::functions::CompState> compState;
+  // ProPort<adas::df::XyzOutput> xyzOutput;  // function-level output(s)
+  ProPort<adas::df::CompState> compState;
   // NEVER a ControlCommand here — demands go to the arbiter (plan.md §5.4)
 };
 
@@ -36,7 +36,7 @@ public:
 
   void init(const DfParams& params) override;  // reads <fn>: config section
   void exec(double dtS) override;                     // one cycle; no clock reads, no I/O
-  const adas::functions::CompState& compState() const override;
+  const adas::df::CompState& compState() const override;
 
 private:
   const <Fn>ReqPorts& reqPorts_;

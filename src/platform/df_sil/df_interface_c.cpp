@@ -105,7 +105,7 @@ void* dfInit(const char* configPath) {
 
 int dfExec(void* handleOpaque, double dtS,
             const DfReqBuf* objects, const DfReqBuf* egoDyn,
-            DfProBuf* hypReaction, DfProBuf* compState) {
+            DfProBuf* aebOutputs, DfProBuf* compState) {
   if (handleOpaque == nullptr) {
     return 0;
   }
@@ -121,10 +121,10 @@ int dfExec(void* handleOpaque, double dtS,
 
     bool ok = true;
 #ifdef ADAS_FN_AEB_ENABLED
-    ok = writeProBuf(handle->aebProPorts.hypReaction.data, handle->aebProPorts.hypReaction.updated, hypReaction) && ok;
+    ok = writeProBuf(handle->aebProPorts.outputs.data, handle->aebProPorts.outputs.updated, aebOutputs) && ok;
     ok = writeProBuf(handle->aebProPorts.compState.data, handle->aebProPorts.compState.updated, compState) && ok;
 #else
-    if (hypReaction != nullptr) hypReaction->updated = 0;
+    if (aebOutputs != nullptr) aebOutputs->updated = 0;
     if (compState != nullptr) compState->updated = 0;
 #endif
     return ok ? 1 : 0;

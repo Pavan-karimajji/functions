@@ -3,8 +3,9 @@
 # that dfInit(configPath) pointed at a project folder changes behavior.
 
 aeb:
-  AEB_TTC_BRAKE_THRESHOLD_S: 1.4
-  AEB_TTC_WARN_THRESHOLD_S: 2.8
+  AEB_TTC_BRAKE_THRESHOLD_S: 1.4   # unread placeholder — actuation increment
+  # wired: latent pre-warning fires when min CV TTC < this (docs/df_aeb_ttc_blueprint.md)
+  AEB_TTC_PRE_WARNING_THRESHOLD_S: 1.2
   AEB_MIN_SPEED_MPS: 1.0
   AEB_MAX_DECELERATION_MPSS: -9.0
   AEB_LATERAL_RELEVANCE_M: 2.2

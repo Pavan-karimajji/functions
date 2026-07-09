@@ -43,12 +43,12 @@ DF_API int dfApiVersion(void);
 DF_API void* dfInit(const char* configPath);
 
 /* One cycle. objects/egoDyn: serialized GenObjectList/VehDyn (NULL if not received this tick).
-   hypReaction/compState: caller-allocated output buffers (NULL if that output isn't wanted).
+   aebOutputs/compState: caller-allocated output buffers (NULL if that output isn't wanted).
    Returns 1 on success, 0 on failure (e.g. null handle, output buffer too small). */
 DF_API int dfExec(void* handle, double dtS,
                      const DfReqBuf* objects,
                      const DfReqBuf* egoDyn,
-                     DfProBuf* hypReaction,
+                     DfProBuf* aebOutputs,
                      DfProBuf* compState);
 
 DF_API void dfShutdown(void* handle);

@@ -4,7 +4,7 @@
 
 #include "PerceptionCore__Outputs/gen_object_list.pb.h"
 #include "VehSigProvider__Outputs/veh_dyn.pb.h"
-#include "Aeb__Outputs/aeb_hyp_reaction.pb.h"
+#include "Aeb__Outputs/aeb_outputs.pb.h"
 #include "common/comp_state.pb.h"
 
 namespace adas::df {
@@ -15,12 +15,12 @@ struct AebReqPorts {
   ReqPort<adas::common::VehDyn>            egoDyn;
 };
 
-// AEB's provide-ports. hypReaction is AEB's own warning/reaction output —
+// AEB's provide-ports. outputs is AEB's own warning/reaction output —
 // there is no separate FCW component. compState is the mandatory heartbeat
 // every function publishes (plan.md §5.4).
 struct AebProPorts {
-  ProPort<adas::functions::AebHypReaction> hypReaction;
-  ProPort<adas::functions::CompState>      compState;
+  ProPort<adas::df::AebOutputs> outputs;
+  ProPort<adas::df::CompState>  compState;
 };
 
 }  // namespace adas::df

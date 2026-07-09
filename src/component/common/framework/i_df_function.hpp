@@ -21,7 +21,7 @@ public:
   // One cycle. dtS comes from the host (§5.3) — no clock reads, no I/O.
   virtual void exec(double dtS) = 0;
 
-  virtual const adas::functions::CompState& compState() const = 0;
+  virtual const adas::df::CompState& compState() const = 0;
 };
 
 }  // namespace adas::df

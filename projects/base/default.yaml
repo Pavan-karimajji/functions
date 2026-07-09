@@ -1,6 +1,7 @@
 aeb:
-  AEB_TTC_BRAKE_THRESHOLD_S: 1.2
-  AEB_TTC_WARN_THRESHOLD_S: 2.5
+  AEB_TTC_BRAKE_THRESHOLD_S: 1.2   # unread placeholder — actuation increment
+  # wired: latent pre-warning fires when min CV TTC < this (docs/df_aeb_ttc_blueprint.md)
+  AEB_TTC_PRE_WARNING_THRESHOLD_S: 1.0
   AEB_MIN_SPEED_MPS: 1.0
   AEB_MAX_DECELERATION_MPSS: -8.0
   AEB_LATERAL_RELEVANCE_M: 2.0
