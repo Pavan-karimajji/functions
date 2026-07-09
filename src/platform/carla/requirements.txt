@@ -1,7 +1,7 @@
 # Python 3.12 only - CARLA 0.9.16's Windows wheel is built for cp312 (verified
-# against the locally installed CARLA_0.9.16.zip's PythonAPI/carla/dist/
+# against the local install at C:\ws\sw\carla\PythonAPI\carla\dist\
 # carla-0.9.16-cp312-cp312-win_amd64.whl). Install that wheel directly, e.g.:
-#   py -3.12 -m pip install "C:\CARLA_0.9.16\PythonAPI\carla\dist\carla-0.9.16-cp312-cp312-win_amd64.whl"
+#   py -3.12 -m pip install "C:\ws\sw\carla\PythonAPI\carla\dist\carla-0.9.16-cp312-cp312-win_amd64.whl"
 # It is not listed below since it isn't installable from PyPI on Windows.
 
 pyyaml>=6.0

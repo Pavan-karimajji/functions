@@ -1,25 +1,40 @@
 # Bridge-only scenario config - never read by df (docs/df_carla_bridge_blueprint.md §6).
-# First scenario: straight road, ego at constant speed approaching a stationary
-# lead vehicle - the same canonical case df_aeb_ttc_blueprint.md's own gtest
-# (WarningFiresWhenTtcBelowThreshold) already covers synthetically.
+#
+# Canonical AEB test case (docs/df_carla_bridge_blueprint.md §10 "Test
+# methodology" - phase 1, test case design): ego 10 m/s, stationary target,
+# 30m initial gap. TTC = distance / 10; base project's
+# AEB_TTC_PRE_WARNING_THRESHOLD_S=1.0 -> b_latent_pre_warning_active fires
+# once distance drops below 10m (closes from 30m in 2.0s, fires at 2.0s,
+# reaches the 2m stop distance 0.8s after that - short and deliberate, not
+# tuned for watchability like the earlier 60m/5m/s run was).
 
 carla:
   host: 127.0.0.1
   port: 2000
-  map: Town04          # already cached locally; long straight highway segments
-  dt_s: 0.05            # matches the existing test_interface_c_api.cpp convention
+  map: Town04          # long straight highway segments
+  # No dt_s here - carla_bridge.py paces itself against real wall-clock time
+  # (TARGET_HZ), not a configured nominal step. See carla_bridge.py's
+  # TARGET_HZ comment for why CARLA's own tick timestamp isn't used for this.
 
 # Both vehicles are kinematic (physics disabled, teleported by constant velocity
 # each tick) - deterministic and reproducible for verifying the pipeline fires at
 # the expected TTC. Not modeling real vehicle dynamics; that's a later concern.
+# Spawned at a real map spawn point (snapped to the lane centerline), not made-up
+# coordinates - arbitrary (x, y) isn't guaranteed to be on the road network.
 ego:
   blueprint: vehicle.tesla.model3
-  spawn: {x: 0.0, y: 0.0, z: 0.5, yaw: 0.0}
-  speed_mps: 15.0
+  # Verified against this Town04 install: 150m of uninterrupted same-road/lane
+  # travel from this spawn point (no dead end, no lane/road id change) - many
+  # of Town04's 372 spawn points sit near ramps/merges where waypoint.next()
+  # can't continue, which silently froze the scenario before this was picked.
+  spawn_point_index: 184
+  speed_mps: 10.0
 
+# Spawned initial_gap_m ahead of ego along the same road (waypoint.next()), so
+# it automatically faces the same lane direction as ego.
 lead:
   blueprint: vehicle.tesla.model3
-  spawn: {x: 60.0, y: 0.0, z: 0.5, yaw: 0.0}
+  initial_gap_m: 30.0
   speed_mps: 0.0
 
 # Range within which other actors are mapped into GenObjectList (blueprint §4 item 3).
