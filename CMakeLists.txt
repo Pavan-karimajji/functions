@@ -21,6 +21,16 @@ if(NOT DEFINED ADAS_PROJECT)
     set(ADAS_PROJECT base CACHE STRING "Which projects/<name> calibration folder to build against, e.g. base, proj_alpha")
 endif()
 
+# Compile-time bound on how many GenObjects any function's exec() processes
+# per cycle - mirrors the reference codebase's EM_N_OBJECTS pattern (a single
+# shared fixed-array budget, not one macro per array type), just driven by a
+# CMake cache variable instead of an ARXML-generated header. Single global
+# value for now, not per-project (see src/component/common/framework/object_limits.hpp).
+# Override for testing: cmake --preset sil-vs2026 -DADAS_MAX_GEN_OBJECTS=200
+if(NOT DEFINED ADAS_MAX_GEN_OBJECTS)
+    set(ADAS_MAX_GEN_OBJECTS 50 CACHE STRING "Maximum number of GenObjects processed per exec() cycle")
+endif()
+
 find_package(AdasInterfaces REQUIRED)
 
 add_subdirectory(src/component)

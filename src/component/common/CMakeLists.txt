@@ -13,3 +13,10 @@ target_link_libraries(df_common PUBLIC
                           # df_common's own .cpp files don't call into it directly —
                           # consumers (fn_aeb, df_tests) get it for free via PUBLIC
 )
+target_compile_definitions(df_common PUBLIC
+    ADAS_MAX_GEN_OBJECTS=${ADAS_MAX_GEN_OBJECTS}   # object_limits.hpp's #ifndef guard
+                                                     # picks this up; PUBLIC so every
+                                                     # consumer (fn_aeb, df_tests) sees
+                                                     # the same value the root CMakeLists.txt
+                                                     # cache variable was built with
+)

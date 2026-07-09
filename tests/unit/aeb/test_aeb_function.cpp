@@ -1,6 +1,9 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
+
 #include "component/aeb/aeb_function.hpp"
+#include "component/common/framework/object_limits.hpp"
 
 namespace adas::df {
 namespace {
@@ -162,6 +165,27 @@ TEST(AebFunctionTest, MinTtcObjectWins) {
 
   EXPECT_TRUE(proPorts.outputs.data.b_latent_pre_warning_active());
   EXPECT_EQ(proPorts.outputs.data.critical_obj_id(), 9u);
+}
+
+// Proves the kMaxGenObjects bound (object_limits.hpp, docs/df_carla_bridge_blueprint.md,
+// 2026-07-09) is real, not cosmetic: a would-fire object placed past the
+// compile-time budget is never even looked at, even though every earlier
+// slot is a genuinely ineligible (receding) object.
+TEST(AebFunctionTest, ObjectsBeyondMaxGenObjectsAreIgnored) {
+  AebReqPorts reqPorts;
+  setFreshInputs(reqPorts);
+  for (std::size_t i = 0; i < kMaxGenObjects; ++i) {
+    *reqPorts.emGenObjList.data.add_objects() = makeObject(5.0f, 10.0f, static_cast<uint32_t>(i + 1));  // receding, never fires
+  }
+  *reqPorts.emGenObjList.data.add_objects() = makeObject(1.0f, -10.0f, 999);  // TTC 0.1s, would fire - but it's object index kMaxGenObjects, one past the bound
+  AebProPorts proPorts;
+
+  AebFunction fn(reqPorts, proPorts);
+  fn.init(testParams());
+  fn.exec(0.05);
+
+  EXPECT_FALSE(proPorts.outputs.data.b_latent_pre_warning_active());
+  EXPECT_EQ(proPorts.outputs.data.critical_obj_id(), 0u);
 }
 
 TEST(AebFunctionTest, ThresholdReadFromParams) {

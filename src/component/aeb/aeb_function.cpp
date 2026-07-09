@@ -1,7 +1,10 @@
 #include "component/aeb/aeb_function.hpp"
 
+#include <algorithm>
 #include <cstdint>
 #include <limits>
+
+#include "component/common/framework/object_limits.hpp"
 
 namespace adas::df {
 
@@ -34,7 +37,14 @@ void AebFunction::exec(double dtS) {
     // the minimum-TTC object among those wins ties by list order.
     double minTtcS = std::numeric_limits<double>::infinity();
     std::uint32_t criticalId = 0;
-    for (const auto& obj : reqPorts_.emGenObjList.data.objects()) {
+    // Bounded to kMaxGenObjects regardless of how many the incoming message
+    // actually contains (object_limits.hpp) - caps worst-case execution time
+    // and guards against a malformed/oversized message crossing the C API
+    // boundary, mirroring the reference's fixed-array EM_N_OBJECTS budget.
+    const auto& objects = reqPorts_.emGenObjList.data.objects();
+    const int numObjects = std::min(objects.size(), static_cast<int>(kMaxGenObjects));
+    for (int i = 0; i < numObjects; ++i) {
+      const auto& obj = objects.Get(i);
       const float dx = obj.kinematic().f_dist_x();
       const float vrelX = obj.kinematic().f_vrel_x();
       if (dx > 0.0f && vrelX < 0.0f) {
