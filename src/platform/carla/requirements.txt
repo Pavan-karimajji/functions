@@ -1,0 +1,12 @@
+# Python 3.12 only - CARLA 0.9.16's Windows wheel is built for cp312 (verified
+# against the locally installed CARLA_0.9.16.zip's PythonAPI/carla/dist/
+# carla-0.9.16-cp312-cp312-win_amd64.whl). Install that wheel directly, e.g.:
+#   py -3.12 -m pip install "C:\CARLA_0.9.16\PythonAPI\carla\dist\carla-0.9.16-cp312-cp312-win_amd64.whl"
+# It is not listed below since it isn't installable from PyPI on Windows.
+
+pyyaml>=6.0
+
+# Must match the protoc version interfaces' Conan package generates with
+# (protobuf/3.21.12 -> Python runtime line 4.21.x) - a mismatched runtime
+# rejects generated _pb2.py files at import time (gencode version check).
+protobuf==4.21.12

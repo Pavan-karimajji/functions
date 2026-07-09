@@ -1,0 +1,33 @@
+# Bridge-only scenario config - never read by df (docs/df_carla_bridge_blueprint.md §6).
+# First scenario: straight road, ego at constant speed approaching a stationary
+# lead vehicle - the same canonical case df_aeb_ttc_blueprint.md's own gtest
+# (WarningFiresWhenTtcBelowThreshold) already covers synthetically.
+
+carla:
+  host: 127.0.0.1
+  port: 2000
+  map: Town04          # already cached locally; long straight highway segments
+  dt_s: 0.05            # matches the existing test_interface_c_api.cpp convention
+
+# Both vehicles are kinematic (physics disabled, teleported by constant velocity
+# each tick) - deterministic and reproducible for verifying the pipeline fires at
+# the expected TTC. Not modeling real vehicle dynamics; that's a later concern.
+ego:
+  blueprint: vehicle.tesla.model3
+  spawn: {x: 0.0, y: 0.0, z: 0.5, yaw: 0.0}
+  speed_mps: 15.0
+
+lead:
+  blueprint: vehicle.tesla.model3
+  spawn: {x: 60.0, y: 0.0, z: 0.5, yaw: 0.0}
+  speed_mps: 0.0
+
+# Range within which other actors are mapped into GenObjectList (blueprint §4 item 3).
+object_range_m: 100.0
+
+# df config/DLL paths: leave null to use carla_bridge.py's computed defaults
+# (projects/base/default.yaml, build-sil-vs2026's df_sil.dll) - override only
+# if you built a different preset/project.
+df:
+  config_path: null
+  dll_path: null
