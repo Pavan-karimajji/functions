@@ -232,6 +232,39 @@ def velocity_world(yaw_deg: float, speed_mps: float) -> tuple:
     return (speed_mps * math.cos(yaw_rad), speed_mps * math.sin(yaw_rad))
 
 
+def compute_ttc_s(ego_actor: "carla.Actor", ego_speed_mps: float,
+                   lead_actor: "carla.Actor", lead_speed_mps: float) -> "float | None":
+    """TTC for console/on-screen display only - df_sil.dll's AebOutputs does
+    not expose the TTC value itself, only the resulting flag/critical_obj_id,
+    so this recomputes it independently using the same eligibility rule
+    AebFunction::exec() uses (ahead-and-closing only, docs/df_aeb_ttc_blueprint.md
+    §3.2): returns None if the target isn't ahead-and-closing (matches the
+    "no warning" case), never a negative or infinite value."""
+    ego_t = ego_actor.get_transform()
+    ego_vx, ego_vy = velocity_world(ego_t.rotation.yaw, ego_speed_mps)
+    lead_t = lead_actor.get_transform()
+    lead_vx, lead_vy = velocity_world(lead_t.rotation.yaw, lead_speed_mps)
+    rel = frame_convert.to_ego_frame(
+        ego_t.location.x, ego_t.location.y, ego_t.rotation.yaw, ego_vx, ego_vy,
+        lead_t.location.x, lead_t.location.y, lead_vx, lead_vy,
+    )
+    if rel.dist_x > 0.0 and rel.vrel_x < 0.0:
+        return rel.dist_x / -rel.vrel_x
+    return None
+
+
+def draw_aeb_indicator(world: "carla.World", lead_actor: "carla.Actor", pre_warning: bool, life_time: float) -> None:
+    """Very simple, deliberately temporary on-screen indicator (user,
+    2026-07-09: "not planning for it as a final one") - floating text above
+    the lead vehicle, red "AEB WARNING" when pre_warning is True, a small
+    neutral marker otherwise."""
+    loc = lead_actor.get_transform().location + carla.Location(z=2.5)
+    if pre_warning:
+        world.debug.draw_string(loc, "AEB WARNING", color=carla.Color(255, 0, 0), life_time=life_time)
+    else:
+        world.debug.draw_string(loc, "-", color=carla.Color(0, 200, 0), life_time=life_time)
+
+
 def build_gen_object_list(ego_actor: "carla.Actor", ego_speed_mps: float,
                            targets: list, object_range_m: float) -> "gen_object_list_pb2.GenObjectList":
     ego_t = ego_actor.get_transform()
@@ -352,11 +385,15 @@ def run(scenario_path: Path) -> None:
 
             distance = ego_actor.get_transform().location.distance(lead_actor.get_transform().location)
             if elapsed_s >= next_print_s:
+                ttc_s = compute_ttc_s(ego_actor, ego_cfg["speed_mps"], lead_actor, lead_cfg["speed_mps"])
+                ttc_str = f"{ttc_s:5.2f}s" if ttc_s is not None else "  n/a"
                 print(
-                    f"[carla_bridge] t={elapsed_s:6.2f}s dist={distance:5.1f}m "
+                    f"[carla_bridge] t={elapsed_s:6.2f}s dist={distance:5.1f}m ttc={ttc_str} "
                     f"pre_warning={outputs.b_latent_pre_warning_active} "
                     f"critical_obj_id={outputs.critical_obj_id}"
                 )
+                draw_aeb_indicator(world, lead_actor, outputs.b_latent_pre_warning_active,
+                                    life_time=PRINT_PERIOD_S + 0.1)
                 next_print_s = elapsed_s + PRINT_PERIOD_S
 
             if distance <= STOP_DISTANCE_M:
