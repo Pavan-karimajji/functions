@@ -43,6 +43,9 @@ DEFAULT_DLL_PATH = DF_ROOT / "build-sil-vs2026" / "src" / "platform" / "df_sil" 
 # call: scenario configs multiply as test cases are added, and shouldn't
 # clutter the binding code's own folder).
 CARLA_SCENARIOS_DIR = DF_ROOT / "tests" / "carla_scenarios"
+# --record output goes here, one .mcap per scenario, same basename as its
+# source YAML (docs/df_carla_mcap_replay_plan.md, tests/carla_testruns/README.md).
+CARLA_TESTRUNS_DIR = DF_ROOT / "tests" / "carla_testruns"
 DEFAULT_SCENARIO_NAME = "canonical_10mps_30m.yaml"
 DEFAULT_CONFIG_PATH = DF_ROOT / "projects" / "base" / "default.yaml"
 
@@ -148,14 +151,16 @@ def spawn_kinematic_ahead(world: "carla.World", ego: "carla.Actor", cfg: dict) -
     return actor
 
 
-def follow_with_spectator(world: "carla.World", ego_actor: "carla.Actor", lead_actor: "carla.Actor") -> None:
-    """Points CARLA's viewport camera close behind/above ego (ego's own
-    perspective, not an aerial/drone shot - user's explicit call, 2026-07-09,
-    after the first version scaled back-off/height with the gap and ended up
-    too far overhead), while still aiming toward the midpoint between ego and
-    the lead vehicle rather than purely along ego's heading, so the lead
-    stays framed too even from this close position. Fixed, modest offset -
-    does not scale with the gap."""
+def compute_chase_transform(ego_actor: "carla.Actor", lead_actor: "carla.Actor") -> "carla.Transform":
+    """Close behind/above ego (ego's own perspective, not an aerial/drone
+    shot - user's explicit call, 2026-07-09, after the first version scaled
+    back-off/height with the gap and ended up too far overhead), aimed
+    toward the midpoint between ego and the lead vehicle rather than purely
+    along ego's heading, so the lead stays framed too even from this close
+    position. Fixed, modest offset - does not scale with the gap.
+
+    Shared by follow_with_spectator() (live viewport) and mcap_recorder.py's
+    chase-view camera sensor (recorded video) - same view, two consumers."""
     ego_t = ego_actor.get_transform()
     ego_loc = ego_t.location
     lead_loc = lead_actor.get_transform().location
@@ -179,9 +184,11 @@ def follow_with_spectator(world: "carla.World", ego_actor: "carla.Actor", lead_a
     look_yaw = math.degrees(math.atan2(dy, dx))
     look_pitch = math.degrees(math.atan2(dz, horizontal_dist))
 
-    world.get_spectator().set_transform(carla.Transform(
-        camera_loc, carla.Rotation(pitch=look_pitch, yaw=look_yaw),
-    ))
+    return carla.Transform(camera_loc, carla.Rotation(pitch=look_pitch, yaw=look_yaw))
+
+
+def follow_with_spectator(world: "carla.World", ego_actor: "carla.Actor", lead_actor: "carla.Actor") -> None:
+    world.get_spectator().set_transform(compute_chase_transform(ego_actor, lead_actor))
 
 
 class LaneAdvancer:
@@ -326,7 +333,7 @@ def build_gen_object_list(ego_actor: "carla.Actor", ego_speed_mps: float,
     return objects_msg
 
 
-def run(scenario_path: Path) -> None:
+def run(scenario_path: Path, record: bool = False) -> None:
     scenario = load_scenario(scenario_path)
     carla_cfg = scenario["carla"]
 
@@ -369,6 +376,13 @@ def run(scenario_path: Path) -> None:
     print("[carla_bridge] starting in 5 seconds ...")
     time.sleep(5.0)
 
+    recorder = None
+    if record:
+        import mcap_recorder  # deferred: only --record needs foxglove/mcap/PIL imports
+        CARLA_TESTRUNS_DIR.mkdir(parents=True, exist_ok=True)
+        output_path = CARLA_TESTRUNS_DIR / f"{scenario_path.stem}.mcap"
+        recorder = mcap_recorder.McapRecorder(output_path, world, compute_chase_transform(ego_actor, lead_actor))
+
     lane_advancer = LaneAdvancer()
     try:
         last_real_t = time.perf_counter()
@@ -389,7 +403,8 @@ def run(scenario_path: Path) -> None:
 
             lane_advancer.advance(world, ego_actor, ego_cfg["speed_mps"], dt_s)
             lane_advancer.advance(world, lead_actor, lead_cfg["speed_mps"], dt_s)
-            follow_with_spectator(world, ego_actor, lead_actor)
+            chase_transform = compute_chase_transform(ego_actor, lead_actor)
+            world.get_spectator().set_transform(chase_transform)
 
             objects_msg = build_gen_object_list(
                 ego_actor, ego_cfg["speed_mps"],
@@ -398,6 +413,10 @@ def run(scenario_path: Path) -> None:
                 scenario["num_object_slots"],
             )
             ego_dyn_msg = veh_dyn_pb2.VehDyn()  # unread by CV-TTC this increment; freshness is what matters
+
+            if recorder is not None:
+                recorder.update_camera_transform(chase_transform)
+                recorder.record_tick(elapsed_s, objects_msg, ego_dyn_msg)
 
             objects_req, _objects_keepalive = df_ctypes.make_req_buf(
                 objects_msg.SerializeToString(), age_s=0.0, valid=True)
@@ -441,6 +460,8 @@ def run(scenario_path: Path) -> None:
                 print(f"[carla_bridge] stopping - reached MAX_SCENARIO_TIME_S={MAX_SCENARIO_TIME_S}")
                 break
     finally:
+        if recorder is not None:
+            recorder.close()
         ego_actor.destroy()
         lead_actor.destroy()
         dll.dfShutdown(handle)
@@ -465,5 +486,9 @@ if __name__ == "__main__":
     parser.add_argument("scenario", nargs="?", default=DEFAULT_SCENARIO_NAME,
                          help="Scenario YAML - bare filename resolves against "
                               f"tests/carla_scenarios/. Default: {DEFAULT_SCENARIO_NAME}")
+    parser.add_argument("--record", action="store_true",
+                         help="Also write dfExec's per-tick inputs + a chase-view video feed "
+                              "to tests/carla_testruns/<scenario-basename>.mcap "
+                              "(docs/df_carla_mcap_replay_plan.md).")
     args = parser.parse_args()
-    run(_resolve_scenario_arg(args.scenario))
+    run(_resolve_scenario_arg(args.scenario), record=args.record)

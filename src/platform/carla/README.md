@@ -59,6 +59,20 @@ placeholders elsewhere in this repo).
    `critical_obj_id`) twice a second, until the ego closes to within 2 m of
    the lead vehicle.
 
+## Recording (for replay without CARLA)
+
+Add `--record` to also write `dfExec`'s exact per-tick inputs plus a
+chase-view JPEG video feed to `tests/carla_testruns/<scenario-basename>.mcap`
+(`docs/df_carla_mcap_replay_plan.md`, superproject root):
+
+```
+py -3.12 carla_bridge.py canonical_10mps_30m.yaml --record
+```
+
+Commit the resulting `.mcap` - that's what lets `replay/replay.py` run the
+same test case on a machine with no CARLA installed at all. See
+`../../../tests/carla_testruns/README.md` for the storage convention.
+
 ## Repeating multiple test cases
 
 Scenario YAMLs are test data, not binding code - they live in
@@ -94,7 +108,8 @@ CARLA server (CarlaUE4.exe, own process)
         |
         |  carla.Client(host, port)  ->  world
         v
-carla_bridge.py  (one process, one thread, no camera/sensors)
+carla_bridge.py  (one process, one thread; a camera sensor is only spawned
+                   with --record, for the recorded chase-view video feed)
         |
         |  dfInit(config_path)  ->  df_sil.dll handle          [once]
         |  spawn ego (real spawn point) + lead (gap_m ahead)   [once]
@@ -139,10 +154,13 @@ without the DLL itself ever changing.
 ## Layout
 
 - `carla_bridge.py` - main loop: connect, async tick, map actors, call `dfExec`, log
-- `df_ctypes.py` - `ctypes` mirror of `../df_sil/df_interface_c.h`
+- `mcap_recorder.py` - `--record` support: writes `dfExec`'s inputs + a chase-view camera feed to `.mcap`
+- `df_ctypes.py` - `ctypes` mirror of `../df_sil/df_interface_c.h`, reused directly by `replay/` below
 - `frame_convert.py` - CARLA world frame -> ego-fixed frame (rear-axle-origin, `+x` forward, `+y` left)
 - `requirements.txt` - Python dependencies (`carla` itself installed from CARLA's own wheel, see above)
+- `replay/` - replays a recorded `.mcap` against `df_sil.dll` with no CARLA needed, see its own README. Nested here (not a sibling under `src/platform/`) since it's meaningless without a recording this folder produced, but has its own `requirements.txt` with no `carla` entry - that's the actual no-CARLA-needed boundary, not the folder location.
 - `../../../tests/carla_scenarios/` - scenario YAML test data (never read by `df`), see "Repeating multiple test cases" above
+- `../../../tests/carla_testruns/` - `.mcap` recordings, see "Recording" above
 
 ## Known issues (confirmed on this machine/CARLA build - see `C:\ws\repo\bumpEstimate\.claude\carla.md` for the full writeup)
 
@@ -167,3 +185,9 @@ without the DLL itself ever changing.
   in for the rear-axle origin directly.
 - `VehDyn` content is unread by the current CV-TTC algorithm (only
   freshness/`valid` matters this increment) - the message is sent default-populated.
+- `--record`'s video frames are best-effort, not frame-exact synced to each
+  tick - CARLA's camera renders on its own cadence in async mode, so a
+  recorded frame is "the latest available" at that tick, same "no
+  frame-exact sync" simplification the rest of this bridge already accepts
+  for timing. The recorded `GenObjectList`/`VehDyn` data is exact; only the
+  video topic is approximate, and only `dfExec`'s data topics are replayed.

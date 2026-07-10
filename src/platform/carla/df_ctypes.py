@@ -5,6 +5,10 @@ no implicit/load-time linking) - the first non-C++ host to call it, per
 docs/df_sil_dll.md rule 7's deferral. Structs/signatures below must be kept in
 lockstep with df_interface_c.h; dfApiVersion() is checked at load time so a
 drift shows up as a loud assertion failure, not a silent buffer misread.
+
+Host-agnostic, not specific to CARLA - also imported by replay/replay.py
+(nested under this folder specifically to reuse it directly, see
+docs/df_carla_mcap_replay_plan.md §4.3).
 """
 
 import ctypes
