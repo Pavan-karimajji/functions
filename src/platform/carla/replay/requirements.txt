@@ -12,3 +12,13 @@ protobuf>=4.25
 
 mcap>=1.0
 mcap-protobuf-support>=0.5
+
+# --viz only (docs/df_carla_viz_plan.md): self-contained 2D bird's-eye-view
+# window - no external app, no server/connection lifecycle.
+opencv-python>=4.9
+numpy>=1.26
+
+# --viz only: live Foxglove Studio stream of df/aeb_outputs + chase video
+# (separate from the BEV window above - no 3D scene here, so none of the
+# frame-tree issues that hit the earlier, dropped SceneUpdate design apply).
+foxglove-sdk>=0.25

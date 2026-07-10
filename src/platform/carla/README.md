@@ -69,7 +69,7 @@ chase-view JPEG video feed to `tests/carla_testruns/<scenario-basename>.mcap`
 py -3.12 carla_bridge.py canonical_10mps_30m.yaml --record
 ```
 
-Commit the resulting `.mcap` - that's what lets `replay/replay.py` run the
+Commit the resulting `.mcap` - that's what lets `replay/df_dll_sim_mcap.py` run the
 same test case on a machine with no CARLA installed at all. See
 `../../../tests/carla_testruns/README.md` for the storage convention.
 
@@ -158,7 +158,7 @@ without the DLL itself ever changing.
 - `df_ctypes.py` - `ctypes` mirror of `../df_sil/df_interface_c.h`, reused directly by `replay/` below
 - `frame_convert.py` - CARLA world frame -> ego-fixed frame (rear-axle-origin, `+x` forward, `+y` left)
 - `requirements.txt` - Python dependencies (`carla` itself installed from CARLA's own wheel, see above)
-- `replay/` - replays a recorded `.mcap` against `df_sil.dll` with no CARLA needed, see its own README. Nested here (not a sibling under `src/platform/`) since it's meaningless without a recording this folder produced, but has its own `requirements.txt` with no `carla` entry - that's the actual no-CARLA-needed boundary, not the folder location.
+- `replay/` - replays a recorded `.mcap` against `df_sil.dll` with no CARLA needed, see its own README. Nested here (not a sibling under `src/platform/`) since it's meaningless without a recording this folder produced, but has its own `requirements.txt` with no `carla` entry - that's the actual no-CARLA-needed boundary, not the folder location. Includes `viz.py` (self-contained 2D bird's-eye-view window) and `foxglove_stream.py` (live Foxglove Studio signal/video stream) for `df_dll_sim_mcap.py --viz` (`docs/df_carla_viz_plan.md`, superproject root).
 - `../../../tests/carla_scenarios/` - scenario YAML test data (never read by `df`), see "Repeating multiple test cases" above
 - `../../../tests/carla_testruns/` - `.mcap` recordings, see "Recording" above
 

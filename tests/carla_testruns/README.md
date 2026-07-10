@@ -11,7 +11,7 @@
   or a scenario YAML with no matching recording, is stale/orphaned.
 - **Committed to git**, not regenerated on demand - whoever has CARLA
   installed records a scenario and pushes the `.mcap`; everyone else runs
-  `src/platform/carla/replay/replay.py` against it, no CARLA required.
+  `src/platform/carla/replay/df_dll_sim_mcap.py` against it, no CARLA required.
 - **Inputs only** - no recorded `AebOutputs`. Replay reruns `dfExec` on the
   recorded inputs; the video topic is for human review in a viewer (e.g.
   Foxglove Studio), not consumed by replay itself.
