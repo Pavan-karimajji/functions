@@ -1,6 +1,7 @@
 # Copyright (c) L&T EPS. All Rights Reserved.
 # Proprietary and Confidential.
 # COMPONENT: DF
+# @author Pavan Karimajji <Pavan.Karimajji@larsentoubro.com>
 
 """Records dfExec's per-tick inputs + a chase-view video feed to a .mcap file
 (docs/df_carla_mcap_replay_plan.md). Used by carla_bridge.py's --record flag.

@@ -1,6 +1,7 @@
 # Copyright (c) L&T EPS. All Rights Reserved.
 # Proprietary and Confidential.
 # COMPONENT: DF
+# @author Pavan Karimajji <Pavan.Karimajji@larsentoubro.com>
 
 """CARLA ground-truth bridge for df_sil.dll (docs/df_carla_bridge_blueprint.md).
 

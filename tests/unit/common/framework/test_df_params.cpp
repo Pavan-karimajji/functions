@@ -4,6 +4,7 @@
 /// @file
 /// @brief
 ///   Unit tests for DfParams' YAML section accessor.
+/// @author Pavan Karimajji <Pavan.Karimajji@larsentoubro.com>
 
 #include <gtest/gtest.h>
 

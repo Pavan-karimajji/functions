@@ -4,6 +4,7 @@
 /// @file
 /// @brief
 ///   AEB function's CV-TTC exec() implementation (plan.md item 3).
+/// @author Pavan Karimajji <Pavan.Karimajji@larsentoubro.com>
 
 #include "component/aeb/aeb_function.hpp"
 

@@ -4,6 +4,7 @@
 /// @file
 /// @brief
 ///   AebFunction class: CV-TTC AEB logic, implements IDfFunction.
+/// @author Pavan Karimajji <Pavan.Karimajji@larsentoubro.com>
 
 #pragma once
 

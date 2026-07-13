@@ -4,6 +4,7 @@
 /// @file
 /// @brief
 ///   ReqPort/ProPort templates: generic require/provide port wrappers.
+/// @author Pavan Karimajji <Pavan.Karimajji@larsentoubro.com>
 
 #pragma once
 

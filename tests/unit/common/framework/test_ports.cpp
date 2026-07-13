@@ -4,6 +4,7 @@
 /// @file
 /// @brief
 ///   Unit tests for ReqPort/ProPort default/assigned state.
+/// @author Pavan Karimajji <Pavan.Karimajji@larsentoubro.com>
 
 #include <gtest/gtest.h>
 

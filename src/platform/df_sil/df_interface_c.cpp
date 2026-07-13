@@ -4,6 +4,7 @@
 /// @file
 /// @brief
 ///   df_sil.dll's C-API implementation (dfInit/dfExec/dfShutdown).
+/// @author Pavan Karimajji <Pavan.Karimajji@larsentoubro.com>
 
 #include "df_interface_c.h"
 

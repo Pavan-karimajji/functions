@@ -1,6 +1,7 @@
 # Copyright (c) L&T EPS. All Rights Reserved.
 # Proprietary and Confidential.
 # COMPONENT: DF
+# @author Pavan Karimajji <Pavan.Karimajji@larsentoubro.com>
 
 """Live Foxglove Studio stream of algorithm signals + chase video for
 df_dll_sim_mcap.py --viz (docs/df_carla_viz_plan.md). Separate module from viz.py's

@@ -4,6 +4,7 @@
 /// @file
 /// @brief
 ///   ParamLoader: loads and sections a project's YAML config file.
+/// @author Pavan Karimajji <Pavan.Karimajji@larsentoubro.com>
 
 #pragma once
 

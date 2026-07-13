@@ -4,6 +4,7 @@
 /// @file
 /// @brief
 ///   AEB's require/provide port structs (AebReqPorts, AebProPorts).
+/// @author Pavan Karimajji <Pavan.Karimajji@larsentoubro.com>
 
 #pragma once
 

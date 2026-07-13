@@ -4,6 +4,7 @@
 /// @file
 /// @brief
 ///   Unit tests for AebFunction's CV-TTC logic.
+/// @author Pavan Karimajji <Pavan.Karimajji@larsentoubro.com>
 
 #include <gtest/gtest.h>
 

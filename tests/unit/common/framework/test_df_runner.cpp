@@ -4,6 +4,7 @@
 /// @file
 /// @brief
 ///   Unit tests for DfRunner's registration/execution order.
+/// @author Pavan Karimajji <Pavan.Karimajji@larsentoubro.com>
 
 #include <gtest/gtest.h>
 

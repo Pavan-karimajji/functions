@@ -4,6 +4,7 @@
 /// @file
 /// @brief
 ///   Unit tests for df_sil.dll's C API (dfInit/dfExec/dfShutdown).
+/// @author Pavan Karimajji <Pavan.Karimajji@larsentoubro.com>
 
 #include <gtest/gtest.h>
 

@@ -4,6 +4,7 @@
 /// @file
 /// @brief
 ///   df_sil.dll's host-agnostic C-API declaration (plan.md section 5.6).
+/// @author Pavan Karimajji <Pavan.Karimajji@larsentoubro.com>
 
 #ifndef ADAS_DF_INTERFACE_C_H_
 #define ADAS_DF_INTERFACE_C_H_

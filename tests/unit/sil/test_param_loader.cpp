@@ -4,6 +4,7 @@
 /// @file
 /// @brief
 ///   Unit tests for ParamLoader against real project YAML files.
+/// @author Pavan Karimajji <Pavan.Karimajji@larsentoubro.com>
 
 #include <gtest/gtest.h>
 

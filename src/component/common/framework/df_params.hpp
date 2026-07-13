@@ -4,6 +4,7 @@
 /// @file
 /// @brief
 ///   Thin wrapper around one function's YAML config section.
+/// @author Pavan Karimajji <Pavan.Karimajji@larsentoubro.com>
 
 #pragma once
 

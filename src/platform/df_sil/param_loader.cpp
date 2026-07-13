@@ -4,6 +4,7 @@
 /// @file
 /// @brief
 ///   ParamLoader implementation: loads a project's YAML config file.
+/// @author Pavan Karimajji <Pavan.Karimajji@larsentoubro.com>
 
 #include "param_loader.hpp"
 

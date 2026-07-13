@@ -4,6 +4,7 @@
 /// @file
 /// @brief
 ///   Shared ADAS_MAX_GEN_OBJECTS budget for per-cycle GenObject processing.
+/// @author Pavan Karimajji <Pavan.Karimajji@larsentoubro.com>
 
 #pragma once
 
