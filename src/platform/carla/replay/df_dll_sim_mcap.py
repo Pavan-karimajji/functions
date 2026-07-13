@@ -179,7 +179,7 @@ def run(mcap_path: Path, dll_path: Path = None, config_path: Path = None,
             outputs.ParseFromString(bytes(aeb_outputs_buf[: aeb_outputs_pro.len]))
 
             if bev_viewer is not None:
-                bev_viewer.show_tick(objects_msg, outputs)
+                bev_viewer.show_tick(objects_msg, outputs, veh_dyn_msg)
             if foxglove_publisher is not None:
                 foxglove_publisher.publish_tick(elapsed_s, outputs, video_msg=video_msg)
 

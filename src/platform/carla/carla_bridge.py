@@ -421,7 +421,17 @@ def run(scenario_path: Path, record: bool = False) -> None:
                 scenario["object_range_m"],
                 scenario["num_object_slots"],
             )
-            ego_dyn_msg = veh_dyn_pb2.VehDyn()  # unread by CV-TTC this increment; freshness is what matters
+            ego_dyn_msg = veh_dyn_pb2.VehDyn()  # still unread by CV-TTC (AebFunction only checks
+                                                 # freshness/valid, docs/df_aeb_ttc_blueprint.md
+                                                 # section 3.2) - longitudinal is real ground truth
+                                                 # now, for the BEV viz's ego-speed readout
+                                                 # (docs/df_carla_viz_plan.md). yaw_rate is left at
+                                                 # 0: LaneAdvancer only refreshes heading in discrete
+                                                 # REFRESH_DISTANCE_M jumps, so a per-tick delta would
+                                                 # spike at each refresh instead of reading true.
+            ego_dyn_msg.longitudinal.velocity = ego_cfg["speed_mps"]
+            ego_dyn_msg.longitudinal.accel = 0.0  # true, not a placeholder: kinematic ego is exactly
+                                                   # constant-velocity (LaneAdvancer never changes speed)
 
             if recorder is not None:
                 recorder.update_camera_transform(chase_transform)
