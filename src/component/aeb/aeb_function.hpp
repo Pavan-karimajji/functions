@@ -1,3 +1,10 @@
+// Copyright (c) L&T EPS. All Rights Reserved.
+// Proprietary and Confidential.
+// COMPONENT: DF
+/// @file
+/// @brief
+///   AebFunction class: CV-TTC AEB logic, implements IDfFunction.
+
 #pragma once
 
 #include "component/common/framework/i_df_function.hpp"

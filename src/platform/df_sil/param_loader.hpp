@@ -1,3 +1,10 @@
+// Copyright (c) L&T EPS. All Rights Reserved.
+// Proprietary and Confidential.
+// COMPONENT: DF
+/// @file
+/// @brief
+///   ParamLoader: loads and sections a project's YAML config file.
+
 #pragma once
 
 #include <string>

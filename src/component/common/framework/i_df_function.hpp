@@ -1,3 +1,10 @@
+// Copyright (c) L&T EPS. All Rights Reserved.
+// Proprietary and Confidential.
+// COMPONENT: DF
+/// @file
+/// @brief
+///   IDfFunction: lifecycle contract every df function implements.
+
 #pragma once
 
 #include "common/comp_state.pb.h"

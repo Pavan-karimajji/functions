@@ -1,3 +1,10 @@
+// Copyright (c) L&T EPS. All Rights Reserved.
+// Proprietary and Confidential.
+// COMPONENT: DF
+/// @file
+/// @brief
+///   ParamLoader implementation: loads a project's YAML config file.
+
 #include "param_loader.hpp"
 
 namespace adas::df {

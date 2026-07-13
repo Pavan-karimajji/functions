@@ -1,3 +1,10 @@
+// Copyright (c) L&T EPS. All Rights Reserved.
+// Proprietary and Confidential.
+// COMPONENT: DF
+/// @file
+/// @brief
+///   AEB's require/provide port structs (AebReqPorts, AebProPorts).
+
 #pragma once
 
 #include "component/common/framework/ports.hpp"

@@ -1,3 +1,7 @@
+# Copyright (c) L&T EPS. All Rights Reserved.
+# Proprietary and Confidential.
+# COMPONENT: DF
+
 """Simulates df_sil.dll against a recorded CARLA test run - no CARLA
 required (docs/df_carla_mcap_replay_plan.md). Reads the exact per-tick
 GenObjectList/VehDyn inputs carla_bridge.py --record wrote to a .mcap and

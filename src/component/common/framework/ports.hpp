@@ -1,3 +1,10 @@
+// Copyright (c) L&T EPS. All Rights Reserved.
+// Proprietary and Confidential.
+// COMPONENT: DF
+/// @file
+/// @brief
+///   ReqPort/ProPort templates: generic require/provide port wrappers.
+
 #pragma once
 
 namespace adas::df {

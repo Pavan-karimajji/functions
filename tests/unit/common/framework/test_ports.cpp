@@ -1,3 +1,10 @@
+// Copyright (c) L&T EPS. All Rights Reserved.
+// Proprietary and Confidential.
+// COMPONENT: DF
+/// @file
+/// @brief
+///   Unit tests for ReqPort/ProPort default/assigned state.
+
 #include <gtest/gtest.h>
 
 #include "component/common/framework/ports.hpp"

@@ -1,3 +1,7 @@
+# Copyright (c) L&T EPS. All Rights Reserved.
+# Proprietary and Confidential.
+# COMPONENT: DF
+
 """CARLA world frame -> ego-fixed frame (docs/df_carla_bridge_blueprint.md §5).
 
 CARLA (UE4 convention): left-handed, Z-up; X forward, Y right, Z up; yaw in

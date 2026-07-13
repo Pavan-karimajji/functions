@@ -1,3 +1,10 @@
+// Copyright (c) L&T EPS. All Rights Reserved.
+// Proprietary and Confidential.
+// COMPONENT: DF
+/// @file
+/// @brief
+///   df_sil.dll's C-API implementation (dfInit/dfExec/dfShutdown).
+
 #include "df_interface_c.h"
 
 #include <cstring>

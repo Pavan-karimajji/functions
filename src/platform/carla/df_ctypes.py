@@ -1,3 +1,7 @@
+# Copyright (c) L&T EPS. All Rights Reserved.
+# Proprietary and Confidential.
+# COMPONENT: DF
+
 """ctypes mirror of src/platform/df_sil/df_interface_c.h.
 
 Loads df_sil.dll's plain C ABI directly (explicit LoadLibrary, since Python has

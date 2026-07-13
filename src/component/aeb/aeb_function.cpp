@@ -1,3 +1,10 @@
+// Copyright (c) L&T EPS. All Rights Reserved.
+// Proprietary and Confidential.
+// COMPONENT: DF
+/// @file
+/// @brief
+///   AEB function's CV-TTC exec() implementation (plan.md item 3).
+
 #include "component/aeb/aeb_function.hpp"
 
 #include <algorithm>

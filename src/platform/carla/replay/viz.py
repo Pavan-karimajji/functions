@@ -1,3 +1,7 @@
+# Copyright (c) L&T EPS. All Rights Reserved.
+# Proprietary and Confidential.
+# COMPONENT: DF
+
 """Live 2D bird's-eye-view (BEV) canvas for df_dll_sim_mcap.py --viz
 (docs/df_carla_viz_plan.md). Draws one tick's GenObjectList + fresh
 AebOutputs onto a plain OpenCV canvas and shows it in a self-contained

@@ -1,3 +1,10 @@
+// Copyright (c) L&T EPS. All Rights Reserved.
+// Proprietary and Confidential.
+// COMPONENT: DF
+/// @file
+/// @brief
+///   Shared ADAS_MAX_GEN_OBJECTS budget for per-cycle GenObject processing.
+
 #pragma once
 
 #include <cstddef>

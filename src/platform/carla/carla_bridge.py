@@ -1,3 +1,7 @@
+# Copyright (c) L&T EPS. All Rights Reserved.
+# Proprietary and Confidential.
+# COMPONENT: DF
+
 """CARLA ground-truth bridge for df_sil.dll (docs/df_carla_bridge_blueprint.md).
 
 Read-only, ground-truth-only: CARLA actor transforms/velocities map directly to
