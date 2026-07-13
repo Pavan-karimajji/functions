@@ -11,14 +11,18 @@ namespace {
 // enough to assert both "registration order == exec order" and "every
 // registered function runs each tick", without needing a real function.
 class RecordingFunction final : public IDfFunction {
- public:
+public:
   RecordingFunction(int id, std::vector<int>& execLog) : id_(id), execLog_(execLog) {}
 
   void init(const DfParams&) override {}
-  void exec(double) override { execLog_.push_back(id_); }
-  const adas::df::CompState& compState() const override { return compState_; }
+  void exec(double) override {
+    execLog_.push_back(id_);
+  }
+  const adas::df::CompState& compState() const override {
+    return compState_;
+  }
 
- private:
+private:
   int id_;
   std::vector<int>& execLog_;
   adas::df::CompState compState_;

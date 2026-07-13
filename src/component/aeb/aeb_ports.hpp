@@ -12,7 +12,7 @@ namespace adas::df {
 // AEB's require-ports (plan.md §5.6). "objects", never "tracks".
 struct AebReqPorts {
   ReqPort<adas::perception::GenObjectList> emGenObjList;
-  ReqPort<adas::common::VehDyn>            egoDyn;
+  ReqPort<adas::common::VehDyn> egoDyn;
 };
 
 // AEB's provide-ports. outputs is AEB's own warning/reaction output —
@@ -20,7 +20,7 @@ struct AebReqPorts {
 // every function publishes (plan.md §5.4).
 struct AebProPorts {
   ProPort<adas::df::AebOutputs> outputs;
-  ProPort<adas::df::CompState>  compState;
+  ProPort<adas::df::CompState> compState;
 };
 
 }  // namespace adas::df

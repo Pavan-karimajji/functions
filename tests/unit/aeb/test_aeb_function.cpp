@@ -9,14 +9,14 @@ namespace adas::df {
 namespace {
 
 DfParams testParams() {
-  return DfParams(YAML::Load(
-      "AEB_MAX_AGE_OBJECTS_S: 0.2\n"
-      "AEB_MAX_AGE_EGO_DYN_S: 0.2\n"
-      "AEB_TTC_PRE_WARNING_THRESHOLD_S: 1.0\n"));
+  return DfParams(
+      YAML::Load("AEB_MAX_AGE_OBJECTS_S: 0.2\n"
+                 "AEB_MAX_AGE_EGO_DYN_S: 0.2\n"
+                 "AEB_TTC_PRE_WARNING_THRESHOLD_S: 1.0\n"));
 }
 
 adas::perception::GenObject makeObject(float distX, float vrelX, uint32_t uiId,
-                                        uint32_t contributingSensors = 0) {
+                                       uint32_t contributingSensors = 0) {
   adas::perception::GenObject obj;
   obj.mutable_kinematic()->set_f_dist_x(distX);
   obj.mutable_kinematic()->set_f_vrel_x(vrelX);
@@ -77,7 +77,8 @@ TEST(AebFunctionTest, NoWarningWithEmptyObjectList) {
 TEST(AebFunctionTest, WarningFiresWhenTtcBelowThreshold) {
   AebReqPorts reqPorts;
   setFreshInputs(reqPorts);
-  *reqPorts.emGenObjList.data.add_objects() = makeObject(/*distX=*/5.0f, /*vrelX=*/-10.0f, /*uiId=*/7);  // TTC 0.5s
+  *reqPorts.emGenObjList.data.add_objects() =
+      makeObject(/*distX=*/5.0f, /*vrelX=*/-10.0f, /*uiId=*/7);  // TTC 0.5s
   AebProPorts proPorts;
 
   AebFunction fn(reqPorts, proPorts);
@@ -100,8 +101,7 @@ TEST(AebFunctionTest, ContributingSensorsFieldDoesNotAffectTtcOutcome) {
     fn.init(testParams());
     fn.exec(0.05);
 
-    EXPECT_TRUE(proPorts.outputs.data.b_latent_pre_warning_active())
-        << "bits=" << bits;
+    EXPECT_TRUE(proPorts.outputs.data.b_latent_pre_warning_active()) << "bits=" << bits;
     EXPECT_EQ(proPorts.outputs.data.critical_obj_id(), 7u) << "bits=" << bits;
   }
 }
@@ -195,9 +195,12 @@ TEST(AebFunctionTest, ObjectsBeyondMaxGenObjectsAreIgnored) {
   AebReqPorts reqPorts;
   setFreshInputs(reqPorts);
   for (std::size_t i = 0; i < kMaxGenObjects; ++i) {
-    *reqPorts.emGenObjList.data.add_objects() = makeObject(5.0f, 10.0f, static_cast<uint32_t>(i + 1));  // receding, never fires
+    *reqPorts.emGenObjList.data.add_objects() =
+        makeObject(5.0f, 10.0f, static_cast<uint32_t>(i + 1));  // receding, never fires
   }
-  *reqPorts.emGenObjList.data.add_objects() = makeObject(1.0f, -10.0f, 999);  // TTC 0.1s, would fire - but it's object index kMaxGenObjects, one past the bound
+  *reqPorts.emGenObjList.data.add_objects() = makeObject(
+      1.0f, -10.0f,
+      999);  // TTC 0.1s, would fire - but it's object index kMaxGenObjects, one past the bound
   AebProPorts proPorts;
 
   AebFunction fn(reqPorts, proPorts);
@@ -215,10 +218,10 @@ TEST(AebFunctionTest, ThresholdReadFromParams) {
   AebProPorts proPorts;
 
   AebFunction fn(reqPorts, proPorts);
-  fn.init(DfParams(YAML::Load(
-      "AEB_MAX_AGE_OBJECTS_S: 0.2\n"
-      "AEB_MAX_AGE_EGO_DYN_S: 0.2\n"
-      "AEB_TTC_PRE_WARNING_THRESHOLD_S: 3.0\n")));  // would not fire at the default 1.0
+  fn.init(DfParams(
+      YAML::Load("AEB_MAX_AGE_OBJECTS_S: 0.2\n"
+                 "AEB_MAX_AGE_EGO_DYN_S: 0.2\n"
+                 "AEB_TTC_PRE_WARNING_THRESHOLD_S: 3.0\n")));  // would not fire at the default 1.0
   fn.exec(0.05);
 
   EXPECT_TRUE(proPorts.outputs.data.b_latent_pre_warning_active());
@@ -245,7 +248,7 @@ TEST(AebFunctionTest, EgoDynNeverReceivedSuppressesWarning) {
   AebReqPorts reqPorts;
   reqPorts.emGenObjList.valid = true;
   reqPorts.emGenObjList.ageS = 0.05;
-  reqPorts.egoDyn.valid = false;  // never received
+  reqPorts.egoDyn.valid = false;                                            // never received
   *reqPorts.emGenObjList.data.add_objects() = makeObject(5.0f, -10.0f, 7);  // would fire if fresh
   AebProPorts proPorts;
 
@@ -262,7 +265,7 @@ TEST(AebFunctionTest, StaleInputsSuppressWarning) {
   reqPorts.emGenObjList.valid = true;
   reqPorts.emGenObjList.ageS = 0.05;
   reqPorts.egoDyn.valid = true;
-  reqPorts.egoDyn.ageS = 5.0;  // stale
+  reqPorts.egoDyn.ageS = 5.0;                                               // stale
   *reqPorts.emGenObjList.data.add_objects() = makeObject(5.0f, -10.0f, 7);  // would fire if fresh
   AebProPorts proPorts;
 

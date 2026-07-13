@@ -69,7 +69,9 @@ struct DfHandle {
 
 extern "C" {
 
-int dfApiVersion(void) { return 1; }
+int dfApiVersion(void) {
+  return 1;
+}
 
 void* dfInit(const char* configPath) {
   // No exception ever crosses the extern "C" boundary (rule 12 / SWR-DLL-05) —
@@ -86,11 +88,8 @@ void* dfInit(const char* configPath) {
     adas::df::ParamLoader egoLoader(ADAS_EGO_PARAMS_PATH);
     std::cout << "[ego_params placeholder] EGO_LENGTH_M="
               << egoLoader.root().get<double>("EGO_LENGTH_M", -1.0)
-              << " EGO_WHEELBASE_M="
-              << egoLoader.root().get<double>("EGO_WHEELBASE_M", -1.0)
-              << " EGO_MASS_KG="
-              << egoLoader.root().get<double>("EGO_MASS_KG", -1.0)
-              << "\n";
+              << " EGO_WHEELBASE_M=" << egoLoader.root().get<double>("EGO_WHEELBASE_M", -1.0)
+              << " EGO_MASS_KG=" << egoLoader.root().get<double>("EGO_MASS_KG", -1.0) << "\n";
 
 #ifdef ADAS_FN_AEB_ENABLED
     handle->aebFunction.init(loader.section("aeb"));
@@ -103,9 +102,8 @@ void* dfInit(const char* configPath) {
   }
 }
 
-int dfExec(void* handleOpaque, double dtS,
-            const DfReqBuf* objects, const DfReqBuf* egoDyn,
-            DfProBuf* aebOutputs, DfProBuf* compState) {
+int dfExec(void* handleOpaque, double dtS, const DfReqBuf* objects, const DfReqBuf* egoDyn,
+           DfProBuf* aebOutputs, DfProBuf* compState) {
   if (handleOpaque == nullptr) {
     return 0;
   }
@@ -121,8 +119,12 @@ int dfExec(void* handleOpaque, double dtS,
 
     bool ok = true;
 #ifdef ADAS_FN_AEB_ENABLED
-    ok = writeProBuf(handle->aebProPorts.outputs.data, handle->aebProPorts.outputs.updated, aebOutputs) && ok;
-    ok = writeProBuf(handle->aebProPorts.compState.data, handle->aebProPorts.compState.updated, compState) && ok;
+    ok = writeProBuf(handle->aebProPorts.outputs.data, handle->aebProPorts.outputs.updated,
+                     aebOutputs) &&
+         ok;
+    ok = writeProBuf(handle->aebProPorts.compState.data, handle->aebProPorts.compState.updated,
+                     compState) &&
+         ok;
 #else
     if (aebOutputs != nullptr) aebOutputs->updated = 0;
     if (compState != nullptr) compState->updated = 0;

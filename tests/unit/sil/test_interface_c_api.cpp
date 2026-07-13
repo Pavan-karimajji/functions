@@ -56,7 +56,8 @@ TEST(InterfaceCApiTest, RoundTripReportsNeutralAebOutputsAndDeferredCompState) {
   void* handle = dfInit("");  // empty path -> ParamLoader falls back to AebFunction's own defaults
   ASSERT_NE(handle, nullptr);
 
-  adas::perception::GenObjectList objectsMsg;  // empty list — only freshness is checked at this step
+  adas::perception::GenObjectList
+      objectsMsg;  // empty list — only freshness is checked at this step
   adas::common::VehDyn egoDynMsg;
   auto objectsBytes = serialize(objectsMsg);
   auto egoDynBytes = serialize(egoDynMsg);
@@ -154,7 +155,8 @@ TEST(InterfaceCApiTest, ThresholdIsProjectScoped) {
   DfProBuf projAlphaOutputs{projAlphaBuf.data(), projAlphaBuf.size(), 0, 0};
   EXPECT_EQ(dfExec(projAlphaHandle, 0.05, &objects, &egoDyn, &projAlphaOutputs, nullptr), 1);
   adas::df::AebOutputs projAlphaResult;
-  ASSERT_TRUE(projAlphaResult.ParseFromArray(projAlphaBuf.data(), static_cast<int>(projAlphaOutputs.len)));
+  ASSERT_TRUE(
+      projAlphaResult.ParseFromArray(projAlphaBuf.data(), static_cast<int>(projAlphaOutputs.len)));
   EXPECT_TRUE(projAlphaResult.b_latent_pre_warning_active());
   dfShutdown(projAlphaHandle);
 }

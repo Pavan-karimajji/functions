@@ -22,9 +22,9 @@ public:
 
 private:
   const AebReqPorts& reqPorts_;
-  AebProPorts&       proPorts_;
+  AebProPorts& proPorts_;
 
-  double maxAgeObjectsS_ = 0.2;   // overwritten by init(); this is just a safe fallback
+  double maxAgeObjectsS_ = 0.2;  // overwritten by init(); this is just a safe fallback
   double maxAgeEgoDynS_ = 0.2;
 
   // Strictly-less semantics: ttcS == threshold does not fire (docs/df_aeb_ttc_blueprint.md §3.3).

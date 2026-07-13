@@ -19,15 +19,15 @@ void AebFunction::init(const DfParams& params) {
 }
 
 void AebFunction::exec(double dtS) {
-  (void)dtS;  // CV-TTC is a pure function of the current ports; dt unused (docs/df_aeb_ttc_blueprint.md §3.2)
+  (void)dtS;  // CV-TTC is a pure function of the current ports; dt unused
+              // (docs/df_aeb_ttc_blueprint.md §3.2)
 
   // CompState reporting is deliberately not implemented yet (deferred to the
   // detailed AEB rework) — proPorts_.compState is never touched here.
 
   const bool objectsFresh =
       reqPorts_.emGenObjList.valid && reqPorts_.emGenObjList.ageS <= maxAgeObjectsS_;
-  const bool egoDynFresh =
-      reqPorts_.egoDyn.valid && reqPorts_.egoDyn.ageS <= maxAgeEgoDynS_;
+  const bool egoDynFresh = reqPorts_.egoDyn.valid && reqPorts_.egoDyn.ageS <= maxAgeEgoDynS_;
 
   adas::df::AebOutputs out;  // default-constructed: all 8 stage flags false, critical_obj_id 0
 

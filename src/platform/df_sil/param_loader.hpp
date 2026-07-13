@@ -6,13 +6,13 @@
 #include "component/common/framework/df_params.hpp"
 
 #if defined(_WIN32)
-  #if defined(DF_SIL_EXPORTS)
-    #define DF_SIL_API __declspec(dllexport)
-  #else
-    #define DF_SIL_API __declspec(dllimport)
-  #endif
+#if defined(DF_SIL_EXPORTS)
+#define DF_SIL_API __declspec(dllexport)
 #else
-  #define DF_SIL_API
+#define DF_SIL_API __declspec(dllimport)
+#endif
+#else
+#define DF_SIL_API
 #endif
 
 namespace adas::df {
