@@ -15,11 +15,13 @@ DfParams testParams() {
       "AEB_TTC_PRE_WARNING_THRESHOLD_S: 1.0\n"));
 }
 
-adas::perception::GenObject makeObject(float distX, float vrelX, uint32_t uiId) {
+adas::perception::GenObject makeObject(float distX, float vrelX, uint32_t uiId,
+                                        uint32_t contributingSensors = 0) {
   adas::perception::GenObject obj;
   obj.mutable_kinematic()->set_f_dist_x(distX);
   obj.mutable_kinematic()->set_f_vrel_x(vrelX);
   obj.mutable_general()->set_ui_id(uiId);
+  obj.mutable_general()->set_contributingsensors(contributingSensors);
   return obj;
 }
 
@@ -84,6 +86,24 @@ TEST(AebFunctionTest, WarningFiresWhenTtcBelowThreshold) {
 
   EXPECT_TRUE(proPorts.outputs.data.b_latent_pre_warning_active());
   EXPECT_EQ(proPorts.outputs.data.critical_obj_id(), 7u);
+}
+
+TEST(AebFunctionTest, ContributingSensorsFieldDoesNotAffectTtcOutcome) {
+  for (uint32_t bits : {0u, 0x1u, 0x2u, 0x3u}) {
+    AebReqPorts reqPorts;
+    setFreshInputs(reqPorts);
+    *reqPorts.emGenObjList.data.add_objects() =
+        makeObject(/*distX=*/5.0f, /*vrelX=*/-10.0f, /*uiId=*/7, bits);  // TTC 0.5s
+    AebProPorts proPorts;
+
+    AebFunction fn(reqPorts, proPorts);
+    fn.init(testParams());
+    fn.exec(0.05);
+
+    EXPECT_TRUE(proPorts.outputs.data.b_latent_pre_warning_active())
+        << "bits=" << bits;
+    EXPECT_EQ(proPorts.outputs.data.critical_obj_id(), 7u) << "bits=" << bits;
+  }
 }
 
 TEST(AebFunctionTest, NoWarningWhenTtcAboveThreshold) {

@@ -185,6 +185,9 @@ without the DLL itself ever changing.
   in for the rear-axle origin directly.
 - `VehDyn` content is unread by the current CV-TTC algorithm (only
   freshness/`valid` matters this increment) - the message is sent default-populated.
+- `GenObject.Generals` fields are mostly left at default except kinematics,
+  `ui_id`, and `contributingSensors` (radar bit `0x2`, CARLA ground truth
+  stands in for the only sensor path modeled so far).
 - `--record`'s video frames are best-effort, not frame-exact synced to each
   tick - CARLA's camera renders on its own cadence in async mode, so a
   recorded frame is "the latest available" at that tick, same "no

@@ -32,6 +32,17 @@ adas::perception::GenObjectList oneClosingObject(float distX, float vrelX, uint3
   return objectsMsg;
 }
 
+TEST(InterfaceCApiTest, ContributingSensorsRoundTripsThroughSerialization) {
+  adas::perception::GenObjectList objectsMsg;
+  auto* obj = objectsMsg.add_objects();
+  obj->mutable_general()->set_contributingsensors(0x3u);  // camera|radar
+
+  std::string bytes = objectsMsg.SerializeAsString();
+  adas::perception::GenObjectList roundTripped;
+  ASSERT_TRUE(roundTripped.ParseFromString(bytes));
+  EXPECT_EQ(roundTripped.objects(0).general().contributingsensors(), 0x3u);
+}
+
 }  // namespace
 
 TEST(InterfaceCApiTest, ApiVersionIsStable) {

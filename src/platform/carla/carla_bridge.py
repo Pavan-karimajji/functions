@@ -327,6 +327,10 @@ def build_gen_object_list(ego_actor: "carla.Actor", ego_speed_mps: float,
         obj.kinematic.f_vrel_x = rel.vrel_x
         obj.kinematic.f_vrel_y = rel.vrel_y
         obj.general.ui_id = actor_id
+        obj.general.contributingSensors = 0x2  # radar bit - CARLA ground truth
+                                                # currently stands in for the
+                                                # (only) radar path, no camera
+                                                # perception yet (docs/df_genobject_vehdyn_fusion_interfaces_plan.md §4.6)
     while len(objects_msg.objects) < num_object_slots:
         objects_msg.objects.add()  # default-constructed: all-zero, inert padding
 
