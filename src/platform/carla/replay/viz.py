@@ -11,6 +11,8 @@ window - no external app, no connection/server lifecycle. Same primitive
 camera-image overlays once camera-based perception exists.
 """
 
+import math
+
 import cv2
 import numpy as np
 
@@ -169,7 +171,8 @@ def build_bev_frame(objects_msg, outputs, veh_dyn_msg=None) -> np.ndarray:
 
     if veh_dyn_msg is not None:
         ego_kmh = veh_dyn_msg.longitudinal.velocity * 3.6
-        cv2.putText(canvas, f"ego {ego_kmh:.0f}km/h", (12, 52),
+        yaw_rate_deg_s = math.degrees(veh_dyn_msg.lateral.yaw_rate.yaw_rate)
+        cv2.putText(canvas, f"ego {ego_kmh:.0f}km/h, yaw {yaw_rate_deg_s:+.1f}deg/s", (12, 52),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, COLOR_TEXT, 1, cv2.LINE_AA)
 
     return canvas

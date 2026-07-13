@@ -196,6 +196,12 @@ def follow_with_spectator(world: "carla.World", ego_actor: "carla.Actor", lead_a
     world.get_spectator().set_transform(compute_chase_transform(ego_actor, lead_actor))
 
 
+def _angle_diff_deg(new_deg: float, old_deg: float) -> float:
+    """Signed shortest-path difference new-old, wrapped to (-180, 180] - a
+    plain subtraction breaks across the +/-180 degree seam CARLA's yaw uses."""
+    return (new_deg - old_deg + 180.0) % 360.0 - 180.0
+
+
 class LaneAdvancer:
     """Moves actors forward along their road lane.
 
@@ -229,16 +235,34 @@ class LaneAdvancer:
     def __init__(self):
         self._heading_deg = {}              # actor.id -> cached forward heading (degrees)
         self._distance_since_refresh = {}   # actor.id -> meters traveled since last heading refresh
+        self._time_since_heading_change = {}  # actor.id -> seconds accumulated since heading last changed
+        self._yaw_rate_deg_s = {}           # actor.id -> average yaw rate over the last refresh interval
 
     def advance(self, world: "carla.World", actor: "carla.Actor", speed_mps: float, dt_s: float) -> None:
         if speed_mps == 0.0:
             return
         step_m = speed_mps * dt_s
+        self._time_since_heading_change[actor.id] = (
+            self._time_since_heading_change.get(actor.id, 0.0) + dt_s)
 
         distance_since = self._distance_since_refresh.get(actor.id, math.inf)
         if distance_since >= self.REFRESH_DISTANCE_M:
             waypoint = world.get_map().get_waypoint(actor.get_location())
-            self._heading_deg[actor.id] = waypoint.transform.rotation.yaw
+            new_heading_deg = waypoint.transform.rotation.yaw
+            old_heading_deg = self._heading_deg.get(actor.id)
+            elapsed_s = self._time_since_heading_change[actor.id]
+            if old_heading_deg is not None and elapsed_s > 0.0:
+                # Averaged over the time it took to travel REFRESH_DISTANCE_M,
+                # not the single tick the refresh happened on - a per-tick
+                # delta would spike hugely at the refresh tick and read 0
+                # everywhere else, since heading is genuinely piecewise-
+                # constant between refreshes (this is how the road curvature
+                # is actually being sampled here, not sensor noise to smooth
+                # away). This IS the true average angular rate over that
+                # interval, not an approximation of some other ground truth.
+                self._yaw_rate_deg_s[actor.id] = _angle_diff_deg(new_heading_deg, old_heading_deg) / elapsed_s
+            self._heading_deg[actor.id] = new_heading_deg
+            self._time_since_heading_change[actor.id] = 0.0
             distance_since = 0.0
 
         heading_deg = self._heading_deg[actor.id]
@@ -250,6 +274,15 @@ class LaneAdvancer:
         actor.set_transform(transform)
 
         self._distance_since_refresh[actor.id] = distance_since + abs(step_m)
+
+    def yaw_rate_rad_s(self, actor_id: int) -> float:
+        """Ground-truth average yaw rate over the actor's most recent
+        heading-refresh interval (0.0 before its first refresh). Matches the
+        reference VDY producer's radians convention (adas_vdy/ecu/vdy.h /
+        algo_type.h's YawRateVehDyn_t, alongside fAngle_t's own radians -
+        consistent with every other angle already handled in radians
+        throughout this bridge, e.g. frame_convert.py)."""
+        return math.radians(self._yaw_rate_deg_s.get(actor_id, 0.0))
 
 
 def velocity_world(yaw_deg: float, speed_mps: float) -> tuple:
@@ -423,15 +456,13 @@ def run(scenario_path: Path, record: bool = False) -> None:
             )
             ego_dyn_msg = veh_dyn_pb2.VehDyn()  # still unread by CV-TTC (AebFunction only checks
                                                  # freshness/valid, docs/df_aeb_ttc_blueprint.md
-                                                 # section 3.2) - longitudinal is real ground truth
-                                                 # now, for the BEV viz's ego-speed readout
-                                                 # (docs/df_carla_viz_plan.md). yaw_rate is left at
-                                                 # 0: LaneAdvancer only refreshes heading in discrete
-                                                 # REFRESH_DISTANCE_M jumps, so a per-tick delta would
-                                                 # spike at each refresh instead of reading true.
+                                                 # section 3.2) - real ground truth now, for the
+                                                 # BEV viz's ego-speed/yaw-rate readouts
+                                                 # (docs/df_carla_viz_plan.md)
             ego_dyn_msg.longitudinal.velocity = ego_cfg["speed_mps"]
             ego_dyn_msg.longitudinal.accel = 0.0  # true, not a placeholder: kinematic ego is exactly
                                                    # constant-velocity (LaneAdvancer never changes speed)
+            ego_dyn_msg.lateral.yaw_rate.yaw_rate = lane_advancer.yaw_rate_rad_s(ego_actor.id)
 
             if recorder is not None:
                 recorder.update_camera_transform(chase_transform)
