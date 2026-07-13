@@ -11,7 +11,7 @@ ttc/pre_warning/critical_obj_id stream the live bridge prints.
 
 Run: `py -3.12 df_dll_sim_mcap.py [mcap_name]` - no CARLA server, no `carla`
 package needed. The .mcap file is the actual input (docs/df_carla_mcap_replay_plan.md
-§2) - a bare filename resolves against ../../../../tests/carla_testruns/
+§2) - a bare filename resolves against ../../../tests/carla_testruns/
 (".mcap" appended if missing). Which df_sil.dll build/config to run is a
 separate, secondary choice, not part of that input - override with
 --dll-path/--config-path if the defaults below don't apply.
@@ -37,7 +37,7 @@ from pathlib import Path
 from mcap_protobuf.reader import read_protobuf_messages
 
 THIS_DIR = Path(__file__).resolve().parent
-DF_ROOT = THIS_DIR.parents[3]          # replay -> carla -> platform -> src -> df
+DF_ROOT = THIS_DIR.parents[2]          # replay -> carla -> tools -> df
 # df_ctypes.py lives in the parent carla/ folder - replay/ is nested inside
 # it specifically to reuse it directly, no separate shared location needed
 # (docs/df_carla_mcap_replay_plan.md §4.3).
@@ -60,7 +60,7 @@ except ImportError as exc:
     raise ImportError(
         f"Could not import generated protobuf bindings from {INTERFACES_GENERATED_PY}. "
         "Build modules/interfaces with -DADAS_GENERATE_PYTHON_PROTO=ON first "
-        "(see src/platform/carla/README.md)."
+        "(see tools/carla/README.md)."
     ) from exc
 
 TOPIC_GEN_OBJECT_LIST = "df/gen_object_list"

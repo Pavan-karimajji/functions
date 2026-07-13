@@ -21,7 +21,7 @@ Run: `py -3.12 carla_bridge.py [scenario_name]` with a CARLA server already
 running (see README.md for server launch flags - `-vulkan`, administrator, on
 this machine). Omit the argument to run the canonical test case; pass a bare
 filename (e.g. `watchable_5mps_60m.yaml`) to run a different named test case
-instead - all scenario YAMLs live in ../../../tests/carla_scenarios/ (test
+instead - all scenario YAMLs live in ../../tests/carla_scenarios/ (test
 data, not binding code - see docs/df_carla_bridge_blueprint.md §15), a bare
 name or filename resolves there automatically. A full/relative path is used
 as-is if you want a scenario file somewhere else entirely.
@@ -39,7 +39,7 @@ import df_ctypes
 import frame_convert
 
 THIS_DIR = Path(__file__).resolve().parent
-DF_ROOT = THIS_DIR.parents[2]          # carla -> platform -> src -> df
+DF_ROOT = THIS_DIR.parents[1]          # carla -> tools -> df
 MODULES_ROOT = DF_ROOT.parent          # modules/
 INTERFACES_GENERATED_PY = MODULES_ROOT / "interfaces" / "build" / "generated_py"
 DEFAULT_DLL_PATH = DF_ROOT / "build-sil-vs2026" / "src" / "platform" / "df_sil" / "Release" / "df_sil.dll"

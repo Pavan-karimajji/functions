@@ -41,7 +41,7 @@ MinSizeRel/
 *.iobj
 *.ipdb
 
-# Python (src/platform/carla)
+# Python (tools/carla)
 __pycache__/
 *.pyc
 

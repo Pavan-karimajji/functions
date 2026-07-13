@@ -6,14 +6,14 @@ Replays a recording made by `../carla_bridge.py --record` against
 per-tick `GenObjectList`/`VehDyn` messages the live recording captured and
 calls `dfExec` on them in order — same inputs, same outputs, no simulator.
 
-Nested inside `src/platform/carla/` since a recording is meaningless without
+Nested inside `tools/carla/` since a recording is meaningless without
 the binding that produced it - but this folder's own `requirements.txt` has
 no `carla` entry, which is the actual no-CARLA-needed boundary, not the
 folder location.
 
 ## One-time setup
 
-1. **Python 3.12** (matches `src/platform/carla/`'s interpreter - imports
+1. **Python 3.12** (matches `tools/carla/`'s interpreter - imports
    `../df_ctypes.py` directly from its parent folder).
 2. **Install requirements:**
    ```
@@ -31,7 +31,7 @@ folder location.
 
 A recording must already exist - see `../README.md`'s "Recording" section
 (`carla_bridge.py <scenario> --record`), or pull one someone else already
-committed to `../../../../tests/carla_testruns/`. **The `.mcap` file is the
+committed to `../../../tests/carla_testruns/`. **The `.mcap` file is the
 actual input** (`docs/df_carla_mcap_replay_plan.md` §2) - not everyone has
 CARLA, but everyone has the recordings in that folder.
 
