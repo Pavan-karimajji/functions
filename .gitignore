@@ -45,6 +45,12 @@ MinSizeRel/
 __pycache__/
 *.pyc
 
+# Developer GUI - machine-local settings (CARLA exe path, last-used selections)
+scripts/df_gui_config.json
+
+# Regenerable replay/--export analysis artifacts - not committed recordings
+tests/carla_testruns/exports/
+
 # OS
 Thumbs.db
 .DS_Store

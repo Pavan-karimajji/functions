@@ -107,15 +107,54 @@ twice a second like normal playback.
 If you want to freely scrub back and forth through a **recorded run's raw
 inputs** (not a live sim), that's not this flag - just open the `.mcap`
 directly in Foxglove Studio as a plain file; its timeline already gives
-you full play/pause/seek for free, no tooling needed on our side.
+you full play/pause/seek for free, no tooling needed on our side. That file
+won't have `aeb_outputs` in it though (see `--export` below) - only the
+inputs `carla_bridge.py --record` wrote.
+
+## Export a self-contained, freely-scrubbable file (`--export`)
+
+`--viz`'s live Foxglove stream has an inherent gap: it's a live push over a
+websocket to an external client, with no flow control - if you pace
+`--step` by hand, Foxglove's Plot panel can visibly lag/hold stale values
+behind the BEV window, since the BEV window updates in-process (always
+current) while Foxglove has to independently receive-and-render over the
+network (may lag). Wiring Foxglove's *own* scrub bar to drive the live
+`dfExec` doesn't fix this either - it would need rewind, and `dfExec` is
+stateful/forward-only (same reason `--step` itself has no rewind).
+
+`--export` sidesteps this by not being live at all: it runs the same
+forward-only pass once, but instead of pushing over a socket, writes
+`aeb_outputs` (plus the recorded inputs/video) into a **new** `.mcap`:
+
+```
+py -3.12 df_dll_sim_mcap.py canonical_10mps_30m --export
+# -> tests/carla_testruns/exports/canonical_10mps_30m_<timestamp>.mcap
+
+py -3.12 df_dll_sim_mcap.py canonical_10mps_30m --export C:\path\to\out.mcap   # explicit path instead
+```
+
+Open the resulting file directly in Foxglove Studio (**File > Open**, not a
+live connection). Every panel now reads from the same static file, so
+play/pause/seek/**rewind** all just work, perfectly in sync, for free -
+scrubbing backward is safe here because nothing is being computed live
+anymore, you're only looking at an already-known-correct result from the
+one forward pass that already ran. Auto-named output includes the source
+recording's name and a timestamp so repeated exports never collide and
+never lose track of which recording/run they came from.
+
+Runs at full speed (no `--viz` pacing needed) unless combined with `--viz`/
+`--step`, in which case it exports in real time (or on your own pacing)
+alongside whatever you're watching live.
 
 ## Known simplifications
 
-- Inputs only - no recorded `AebOutputs` to diff against, so a mismatch
-  isn't auto-detected; compare the printed stream by eye against a prior
-  run's output, or against `carla_bridge.py`'s own live console output for
-  the same scenario. Auto-diff regression comparison is a parked future
-  capability (`docs/df_carla_mcap_replay_plan.md` §6).
+- The *source* recording (`carla_bridge.py --record`'s own `.mcap`) is
+  inputs only - no `AebOutputs` in it, so eyeballing a mismatch against a
+  prior run still means comparing printed streams by hand or against
+  `carla_bridge.py`'s own live console output. `--export`'s *output* file
+  does contain `aeb_outputs` (computed fresh each export), but auto-diffing
+  two export files against each other is still a parked future capability
+  (`docs/df_carla_mcap_replay_plan.md` §6), not built here.
 - The printed `dist`/`ttc` values come from the recorded `GenObjectList`'s
   `f_dist_x`/`f_vrel_x` (what `dfExec` actually saw), not a recomputed
   ground-truth distance - this can differ slightly from `carla_bridge.py`'s

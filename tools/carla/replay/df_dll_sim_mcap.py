@@ -26,6 +26,19 @@ forward only, no rewind (dfExec is stateful, so "going back" would mean
 literally re-running from cycle 0, not a real seek). With --viz, advance by
 pressing any key in the BEV window; without it, press Enter in the
 terminal. Every cycle prints while stepping, not just twice a second.
+
+Add `--export [OUTPUT.mcap]` to compute aeb_outputs for every tick (one
+forward-only pass, same as always) and write it - plus the recorded
+inputs/video - into a NEW .mcap. Open that file directly in Foxglove Studio
+(File > Open, not a live connection) for perfectly synced native
+play/pause/seek/rewind: no live server, no external-listener lag, because
+nothing is computed live at that point, only replayed from an
+already-known-correct result. This is the fix for --viz's live Foxglove
+stream visibly lagging/holding stale values under manual --step pacing -
+that's an inherent live-push-vs-external-listener gap, not something
+--export has to work around, since it isn't live at all. If OUTPUT.mcap is
+omitted, auto-names <input-stem>_<timestamp>.mcap under
+tests/carla_testruns/exports/.
 """
 
 import argparse
@@ -35,6 +48,7 @@ from itertools import groupby
 from pathlib import Path
 
 from mcap_protobuf.reader import read_protobuf_messages
+from mcap_protobuf.writer import Writer as McapWriter
 
 THIS_DIR = Path(__file__).resolve().parent
 DF_ROOT = THIS_DIR.parents[2]          # replay -> carla -> tools -> df
@@ -49,6 +63,7 @@ INTERFACES_GENERATED_PY = MODULES_ROOT / "interfaces" / "build" / "generated_py"
 DEFAULT_DLL_PATH = DF_ROOT / "build-sil-vs2026" / "src" / "platform" / "df_sil" / "Release" / "df_sil.dll"
 DEFAULT_CONFIG_PATH = DF_ROOT / "projects" / "base" / "default.yaml"
 CARLA_TESTRUNS_DIR = DF_ROOT / "tests" / "carla_testruns"
+EXPORTS_DIR = CARLA_TESTRUNS_DIR / "exports"
 DEFAULT_MCAP_NAME = "canonical_10mps_30m.mcap"
 
 PRINT_PERIOD_S = 0.5  # console log cadence (recorded elapsed time), matches carla_bridge.py
@@ -66,6 +81,7 @@ except ImportError as exc:
 TOPIC_GEN_OBJECT_LIST = "df/gen_object_list"
 TOPIC_VEH_DYN = "df/veh_dyn"
 TOPIC_CHASE_CAMERA = "carla/chase_camera"
+TOPIC_AEB_OUTPUTS = "df/aeb_outputs"  # matches foxglove_stream.py's live topic - same name either way
 
 
 def _resolve_mcap_arg(raw: str) -> Path:
@@ -80,6 +96,19 @@ def _resolve_mcap_arg(raw: str) -> Path:
         path = path.with_suffix(".mcap")
     candidate = CARLA_TESTRUNS_DIR / path.name
     return candidate if candidate.exists() else path
+
+
+def _resolve_export_arg(export_arg, mcap_path: Path) -> Path:
+    """--export with an explicit path uses it as-is; bare --export (argparse
+    gives us True via `const=True`) auto-names <input-stem>_<timestamp>.mcap
+    under tests/carla_testruns/exports/ so multiple exports of the same
+    recording never collide and the source + generation time stay obvious
+    from the filename alone."""
+    if isinstance(export_arg, str):
+        return Path(export_arg)
+    EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
+    timestamp = time.strftime("%Y%m%d_%H%M%S")
+    return EXPORTS_DIR / f"{mcap_path.stem}_{timestamp}.mcap"
 
 
 def iter_ticks(mcap_path: Path, include_video: bool = False):
@@ -119,7 +148,8 @@ def _wait_for_step(bev_viewer, tick_index: int) -> None:
 
 
 def run(mcap_path: Path, dll_path: Path = None, config_path: Path = None,
-        viz: bool = False, viz_hold: bool = True, step: bool = False) -> None:
+        viz: bool = False, viz_hold: bool = True, step: bool = False,
+        export_path: Path = None) -> None:
     dll_path = dll_path or DEFAULT_DLL_PATH
     config_path = config_path or DEFAULT_CONFIG_PATH
     if not mcap_path.exists():
@@ -145,11 +175,20 @@ def run(mcap_path: Path, dll_path: Path = None, config_path: Path = None,
         foxglove_publisher = foxglove_stream.FoxglovePublisher(
             aeb_outputs_pb2.AebOutputs.DESCRIPTOR, wait_for_client=viz_hold)
 
+    mcap_writer = None
+    mcap_file = None
+    if export_path is not None:
+        export_path.parent.mkdir(parents=True, exist_ok=True)
+        mcap_file = open(export_path, "wb")
+        mcap_writer = McapWriter(mcap_file)
+        print(f"[export] writing {export_path}")
+
+    include_video = viz or export_path is not None
     elapsed_s = 0.0
     next_print_s = 0.0
     tick_index = 0
     try:
-        for dt_s, objects_msg, veh_dyn_msg, video_msg in iter_ticks(mcap_path, include_video=viz):
+        for dt_s, objects_msg, veh_dyn_msg, video_msg in iter_ticks(mcap_path, include_video=include_video):
             if step:
                 _wait_for_step(bev_viewer, tick_index)
             elif viz:
@@ -182,6 +221,20 @@ def run(mcap_path: Path, dll_path: Path = None, config_path: Path = None,
                 bev_viewer.show_tick(objects_msg, outputs, veh_dyn_msg)
             if foxglove_publisher is not None:
                 foxglove_publisher.publish_tick(elapsed_s, outputs, video_msg=video_msg)
+            if mcap_writer is not None:
+                # log_time = elapsed_s, same convention foxglove_stream.py's live
+                # stream and mcap_recorder.py's --record already use - keeps this
+                # file's timeline meaning identical to both.
+                log_time_ns = int(elapsed_s * 1e9)
+                mcap_writer.write_message(topic=TOPIC_GEN_OBJECT_LIST, message=objects_msg,
+                                           log_time=log_time_ns, publish_time=log_time_ns)
+                mcap_writer.write_message(topic=TOPIC_VEH_DYN, message=veh_dyn_msg,
+                                           log_time=log_time_ns, publish_time=log_time_ns)
+                if video_msg is not None:
+                    mcap_writer.write_message(topic=TOPIC_CHASE_CAMERA, message=video_msg,
+                                               log_time=log_time_ns, publish_time=log_time_ns)
+                mcap_writer.write_message(topic=TOPIC_AEB_OUTPUTS, message=outputs,
+                                           log_time=log_time_ns, publish_time=log_time_ns)
 
             if step or elapsed_s >= next_print_s:
                 nearest = objects_msg.objects[0] if objects_msg.objects else None
@@ -210,6 +263,11 @@ def run(mcap_path: Path, dll_path: Path = None, config_path: Path = None,
             bev_viewer.close()
         if foxglove_publisher is not None:
             foxglove_publisher.close()
+        if mcap_writer is not None:
+            mcap_writer.finish()
+            mcap_file.close()
+            print(f"[export] wrote {export_path} - open it directly in Foxglove Studio "
+                  "(File > Open) for synced native play/pause/seek.")
 
 
 if __name__ == "__main__":
@@ -233,6 +291,14 @@ if __name__ == "__main__":
                          help="Advance one dfExec cycle at a time instead of auto-pacing - press "
                               "any key in the BEV window (with --viz) or Enter in the terminal "
                               "(without it) to advance. Forward only, no rewind.")
+    parser.add_argument("--export", nargs="?", const=True, default=None, metavar="OUTPUT.mcap",
+                         help="Compute aeb_outputs for every tick and write it + the recorded "
+                              "inputs/video to a new .mcap - open it directly in Foxglove Studio "
+                              "for perfectly synced native play/pause/seek (no live server "
+                              "involved). Omit OUTPUT.mcap to auto-name "
+                              "<input-stem>_<timestamp>.mcap under tests/carla_testruns/exports/.")
     args = parser.parse_args()
-    run(_resolve_mcap_arg(args.mcap), dll_path=args.dll_path, config_path=args.config_path,
-        viz=args.viz, viz_hold=not args.no_wait, step=args.step)
+    resolved_mcap = _resolve_mcap_arg(args.mcap)
+    export_path = _resolve_export_arg(args.export, resolved_mcap) if args.export else None
+    run(resolved_mcap, dll_path=args.dll_path, config_path=args.config_path,
+        viz=args.viz, viz_hold=not args.no_wait, step=args.step, export_path=export_path)

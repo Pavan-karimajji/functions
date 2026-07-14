@@ -55,7 +55,7 @@ variants:
         #                            #    exists yet in CMakePresets.json
         # - build: aarch64_qcc_qnx   # <- illustrative only: needs its own
         #                            #    build.bat target + toolchain file
-        #                            #    first (plan.md item 6)
+        #                            #    first (plan.md item 7)
       # production:                  # <- added once plan.md's QNX/Orin/TDA4VM
       #   platforms:                 #    item exists; same file, new part key
       #     - build: aarch64_qcc_qnx
