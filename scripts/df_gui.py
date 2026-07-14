@@ -8,7 +8,9 @@ YAML value - dropdowns are populated by reading conf/build.yml, CMakePresets,
 and scanning the filesystem, never hardcoded. Subprocess output is NOT
 captured into the GUI - it's left to inherit this app's own console (the cmd
 window gui.bat opened), so there's no in-app log panel to keep in sync;
-buttons just show run/done state.
+buttons just show run/done state. CARLA/Foxglove exe paths are persisted as
+real user-scope Windows env vars (CARLA_ROOT/FOXGLOVE_EXE via setx), not a
+repo-local file - they're machine facts, not per-clone ones.
 See docs/df_dev_gui_plan.md (superproject root) for the full design.
 
 Workflow, top to bottom:
@@ -58,6 +60,14 @@ CARLA_LAUNCH_FLAGS = ["-vulkan", "-windowed", "-ResX=800", "-ResY=600"]
 # run fails deep inside foxglove.start_server() with a raw traceback.
 FOXGLOVE_PORT = 8765
 
+# Machine-level facts (where CARLA/Foxglove are installed) don't belong in a
+# gitignored file inside a repo clone - a fresh clone would lose them, and
+# they're the same regardless of which clone/project you're using. Persisted
+# as real Windows user-scope env vars instead (setx, no admin needed), same
+# CARLA_ROOT convention bumpEstimate's own launcher.py already uses.
+CARLA_ROOT_ENV = "CARLA_ROOT"
+FOXGLOVE_EXE_ENV = "FOXGLOVE_EXE"
+
 
 def _port_in_use(port, host="127.0.0.1"):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -66,6 +76,18 @@ def _port_in_use(port, host="127.0.0.1"):
             return False
         except OSError:
             return True
+
+
+def _set_persistent_env(name, value):
+    """Updates os.environ so this already-running process sees it
+    immediately, and persists via setx (HKCU\\Environment, user-scope, no
+    admin) so future terminals/processes - including a completely different
+    repo clone - see it too, without asking the user again."""
+    os.environ[name] = value
+    try:
+        subprocess.run(["setx", name, value], capture_output=True, timeout=10)
+    except (OSError, subprocess.TimeoutExpired):
+        pass
 
 
 # ── config persistence ────────────────────────────────────────────────────────
@@ -274,8 +296,11 @@ class DfGuiApp:
                                            state="disabled")
         self._build_stop_btn.pack(side="left", padx=4)
 
+        self._build_cmd_label = ttk.Label(frame, text="", foreground="#555",
+                                           font=("Consolas", 8))
+        self._build_cmd_label.pack(anchor="w", pady=(6, 0))
         self._build_status = ttk.Label(frame, text="idle", foreground="gray")
-        self._build_status.pack(anchor="w", pady=(6, 0))
+        self._build_status.pack(anchor="w")
 
     def _on_project_changed(self, _=None):
         self._platform_cb.config(values=_list_platforms(self._project.get()))
@@ -288,7 +313,8 @@ class DfGuiApp:
             ["clean"] if self._clean.get() else [])
         self._build_run_btn.config(state="disabled")
         self._build_stop_btn.config(state="normal")
-        self._build_status.config(text="running... (see console)", foreground="darkorange")
+        self._build_cmd_label.config(text="$ " + " ".join(cmd) + f"   (cwd: {DF_ROOT})")
+        self._build_status.config(text="running...", foreground="darkorange")
         self._build_runner = _ProcessRunner(cmd, DF_ROOT, on_done=self._on_build_done)
         self._build_runner.start()
 
@@ -315,8 +341,16 @@ class DfGuiApp:
         row1 = ttk.Frame(frame)
         row1.pack(fill="x")
         ttk.Label(row1, text="CARLA exe:").pack(side="left")
-        self._carla_exe = tk.StringVar(value=self._cfg.get("carla_exe", ""))
-        ttk.Entry(row1, textvariable=self._carla_exe, width=40).pack(side="left", padx=4)
+        carla_root = os.environ.get(CARLA_ROOT_ENV, "")
+        default_carla_exe = os.path.join(carla_root, "CarlaUE4.exe") if carla_root else ""
+        self._carla_exe = tk.StringVar(value=default_carla_exe)
+        carla_exe_entry = ttk.Entry(row1, textvariable=self._carla_exe, width=40)
+        carla_exe_entry.pack(side="left", padx=4)
+        _Tooltip(carla_exe_entry,
+                  "Persisted as the CARLA_ROOT environment variable (setx,\n"
+                  "user-scope) once set via Browse or a successful launch -\n"
+                  "set once, every repo clone and future session picks it up\n"
+                  "automatically, no re-browsing needed.")
         ttk.Button(row1, text="Browse", command=self._browse_carla_exe).pack(side="left")
         self._carla_launch_btn = ttk.Button(row1, text="Launch CARLA Server",
                                              command=self._launch_carla)
@@ -353,15 +387,18 @@ class DfGuiApp:
                                            state="disabled")
         self._carla_stop_btn.pack(side="left")
 
+        self._carla_cmd_label = ttk.Label(frame, text="", foreground="#555",
+                                           font=("Consolas", 8))
+        self._carla_cmd_label.pack(anchor="w", pady=(6, 0))
         self._carla_run_status = ttk.Label(frame, text="idle", foreground="gray")
-        self._carla_run_status.pack(anchor="w", pady=(6, 0))
+        self._carla_run_status.pack(anchor="w")
 
     def _browse_carla_exe(self):
         path = filedialog.askopenfilename(
             title="Select CarlaUE4.exe", filetypes=[("Executable", "*.exe"), ("All files", "*.*")])
         if path:
             self._carla_exe.set(path)
-            _save_cfg(carla_exe=path)
+            _set_persistent_env(CARLA_ROOT_ENV, os.path.dirname(path))
 
     def _launch_carla(self):
         exe = self._carla_exe.get().strip()
@@ -371,7 +408,7 @@ class DfGuiApp:
         if self._carla_proc and self._carla_proc.poll() is None:
             self._carla_status.config(text="already running", foreground="#2a9d2a")
             return
-        _save_cfg(carla_exe=exe)
+        _set_persistent_env(CARLA_ROOT_ENV, os.path.dirname(exe))
         try:
             self._carla_proc = subprocess.Popen([exe] + CARLA_LAUNCH_FLAGS,
                                                  cwd=os.path.dirname(exe))
@@ -403,7 +440,8 @@ class DfGuiApp:
             cmd.append("--record")
         self._carla_run_btn.config(state="disabled")
         self._carla_stop_btn.config(state="normal")
-        self._carla_run_status.config(text="running... (see console)", foreground="darkorange")
+        self._carla_cmd_label.config(text="$ " + " ".join(cmd) + f"   (cwd: {CARLA_DIR})")
+        self._carla_run_status.config(text="running...", foreground="darkorange")
         self._carla_runner = _ProcessRunner(cmd, CARLA_DIR, on_done=self._on_carla_done)
         self._carla_runner.start()
 
@@ -426,6 +464,20 @@ class DfGuiApp:
     def _build_replay_section(self):
         frame = ttk.LabelFrame(self.root, text="REPLAY & FOXGLOVE VIZ", padding=8)
         frame.pack(fill="x", padx=10, pady=(4, 10))
+
+        row0 = ttk.Frame(frame)
+        row0.pack(fill="x", pady=(0, 4))
+        ttk.Label(row0, text="Foxglove exe:").pack(side="left")
+        self._foxglove_exe = tk.StringVar(value=os.environ.get(FOXGLOVE_EXE_ENV, ""))
+        foxglove_exe_entry = ttk.Entry(row0, textvariable=self._foxglove_exe, width=40)
+        foxglove_exe_entry.pack(side="left", padx=4)
+        _Tooltip(foxglove_exe_entry,
+                  "Persisted as the FOXGLOVE_EXE environment variable (setx,\n"
+                  "user-scope) once set via Browse - set once, every repo\n"
+                  "clone and future session picks it up automatically.\n"
+                  "Left blank, \"Open Foxglove Studio\" below falls back to\n"
+                  "opening studio.foxglove.dev in your browser instead.")
+        ttk.Button(row0, text="Browse", command=self._browse_foxglove_exe).pack(side="left")
 
         row1 = ttk.Frame(frame)
         row1.pack(fill="x")
@@ -481,7 +533,8 @@ class DfGuiApp:
         foxglove_btn = ttk.Button(row2, text="Open Foxglove Studio", command=self._open_foxglove)
         foxglove_btn.pack(side="left", padx=8)
         _Tooltip(foxglove_btn,
-                  "Opens studio.foxglove.dev in your browser. Once there,\n"
+                  "Launches the Foxglove exe above if set, else opens\n"
+                  "studio.foxglove.dev in your browser. Either way, once open:\n"
                   "connect to ws://localhost:8765, then add an Image panel\n"
                   "on carla/chase_camera and a Plot/Raw Messages panel on\n"
                   "df/aeb_outputs - a fresh connection starts with no panels,\n"
@@ -509,8 +562,11 @@ class DfGuiApp:
                   "Opens tests/carla_testruns/exports/ in File Explorer, so\n"
                   "you can drag the latest exported .mcap into Foxglove Studio.")
 
+        self._replay_cmd_label = ttk.Label(frame, text="", foreground="#555",
+                                            font=("Consolas", 8))
+        self._replay_cmd_label.pack(anchor="w", pady=(6, 0))
         self._replay_run_status = ttk.Label(frame, text="idle", foreground="gray")
-        self._replay_run_status.pack(anchor="w", pady=(6, 0))
+        self._replay_run_status.pack(anchor="w")
 
     def _refresh_recordings(self):
         self._recording_cb.config(values=_list_recordings())
@@ -542,7 +598,8 @@ class DfGuiApp:
             cmd.append("--export")
         self._replay_run_btn.config(state="disabled")
         self._replay_stop_btn.config(state="normal")
-        self._replay_run_status.config(text="running... (see console)", foreground="darkorange")
+        self._replay_cmd_label.config(text="$ " + " ".join(cmd) + f"   (cwd: {REPLAY_DIR})")
+        self._replay_run_status.config(text="running...", foreground="darkorange")
         self._replay_runner = _ProcessRunner(cmd, REPLAY_DIR, on_done=self._on_replay_done)
         self._replay_runner.start()
 
@@ -560,7 +617,23 @@ class DfGuiApp:
         self._replay_run_status.config(text=f"done (rc={rc})" if ok else f"exited rc={rc}",
                                         foreground="#2a9d2a" if ok else "#c0392b")
 
+    def _browse_foxglove_exe(self):
+        path = filedialog.askopenfilename(
+            title="Select Foxglove Studio executable",
+            filetypes=[("Executable", "*.exe"), ("All files", "*.*")])
+        if path:
+            self._foxglove_exe.set(path)
+            _set_persistent_env(FOXGLOVE_EXE_ENV, path)
+
     def _open_foxglove(self):
+        exe = self._foxglove_exe.get().strip()
+        if exe and os.path.isfile(exe):
+            _set_persistent_env(FOXGLOVE_EXE_ENV, exe)
+            try:
+                subprocess.Popen([exe])
+                return
+            except OSError:
+                pass  # fall through to the browser tab below
         webbrowser.open("https://studio.foxglove.dev/")
 
 
