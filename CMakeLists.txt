@@ -13,10 +13,9 @@ if(NOT DEFINED ENABLED_FUNCTIONS)
     set(ENABLED_FUNCTIONS "aeb" CACHE STRING "Semicolon-separated list of enabled functions, e.g. \"aeb;acc\"")
 endif()
 
-# Which projects/<name> calibration folder to bake in as ADAS_EGO_PARAMS_PATH
-# (see src/platform/df_sil/CMakeLists.txt). Set by build.bat's third argument
-# (build.bat <part> <platform> <project>); override manually with
-# -DADAS_PROJECT=<name>.
+# Which projects/<name> calibration folder this build is associated with.
+# Set by build.bat's third argument (build.bat <part> <platform> <project>);
+# override manually with -DADAS_PROJECT=<name>.
 if(NOT DEFINED ADAS_PROJECT)
     set(ADAS_PROJECT base CACHE STRING "Which projects/<name> calibration folder to build against, e.g. base, proj_alpha")
 endif()

@@ -9,7 +9,6 @@
 #include "df_interface_c.h"
 
 #include <cstring>
-#include <iostream>
 #include <string>
 
 #include "param_loader.hpp"
@@ -88,16 +87,6 @@ void* dfInit(const char* configPath) {
   try {
     auto* handle = new DfHandle();
     adas::df::ParamLoader loader(configPath != nullptr ? configPath : "");
-
-    // Placeholder: proves projects/base/ego_params.yaml reads end-to-end
-    // through ParamLoader::root(). Read-only, not consumed by any function/port yet —
-    // real wiring is plan.md item 2's job, once AEB's TTC/target-selection
-    // logic knows exactly which fields it needs (docs/ego_params.md rule 8).
-    adas::df::ParamLoader egoLoader(ADAS_EGO_PARAMS_PATH);
-    std::cout << "[ego_params placeholder] EGO_LENGTH_M="
-              << egoLoader.root().get<double>("EGO_LENGTH_M", -1.0)
-              << " EGO_WHEELBASE_M=" << egoLoader.root().get<double>("EGO_WHEELBASE_M", -1.0)
-              << " EGO_MASS_KG=" << egoLoader.root().get<double>("EGO_MASS_KG", -1.0) << "\n";
 
 #ifdef ADAS_FN_AEB_ENABLED
     handle->aebFunction.init(loader.section("aeb"));
