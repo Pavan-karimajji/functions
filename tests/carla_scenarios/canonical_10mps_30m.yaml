@@ -48,7 +48,7 @@ object_range_m: 100.0
 # eligibility check already ignores (f_dist_x=0 fails dx > 0.0f).
 num_object_slots: 50
 
-# Leave null to use carla_bridge.py's computed defaults (projects/base/default.yaml,
+# Leave null to use carla_bridge.py's computed defaults (src/project/base/default.yaml,
 # build-sil-vs2026's df_sil.dll Release build).
 df:
   config_path: null

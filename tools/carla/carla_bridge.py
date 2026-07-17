@@ -52,7 +52,7 @@ CARLA_SCENARIOS_DIR = DF_ROOT / "tests" / "carla_scenarios"
 # source YAML (docs/df_carla_mcap_replay_plan.md, tests/carla_testruns/README.md).
 CARLA_TESTRUNS_DIR = DF_ROOT / "tests" / "carla_testruns"
 DEFAULT_SCENARIO_NAME = "canonical_10mps_30m.yaml"
-DEFAULT_CONFIG_PATH = DF_ROOT / "projects" / "base" / "default.yaml"
+DEFAULT_CONFIG_PATH = DF_ROOT / "src" / "project" / "base" / "default.yaml"
 
 MAX_SCENARIO_TIME_S = 60.0  # safety cap on elapsed real time - a misconfigured
                             # scenario (e.g. ego speed 0) never hangs the bridge
@@ -224,16 +224,28 @@ class LaneAdvancer:
     exact, no snapping possible) every tick. `get_waypoint(location)` - a
     nearest-point lookup, a different and much more precise operation than
     `.next(distance)`'s along-lane traversal - is used only every
-    REFRESH_DISTANCE_M to re-derive the heading, correcting for road
+    REFRESH_DISTANCE_M to re-derive the target heading, correcting for road
     curvature before it can accumulate into meaningful drift (2.5cm of
     curvature error over a 2m refresh interval even on a fairly sharp 20m-radius
     curve - negligible against a car-sized lane width).
+
+    Heading-jerk fix (2026-07-14, docs/df_carla_bridge_blueprint.md §1a): the
+    newly-sampled target heading is NOT applied to the actor in one instant
+    snap (a real, visible steering pop, confirmed live). Instead the applied
+    heading ramps toward the target linearly, one tick at a time, converging
+    on it by the next refresh - same REFRESH_DISTANCE_M sampling cadence as
+    before (refreshing more often was tried and rejected: it aliases against
+    CARLA's own waypoint graph resolution and makes things noisier, see the
+    doc). The reported yaw_rate (true average rate over the interval) is
+    unchanged by this - only how the heading is applied between samples.
     """
 
     REFRESH_DISTANCE_M = 2.0
 
     def __init__(self):
-        self._heading_deg = {}              # actor.id -> cached forward heading (degrees)
+        self._heading_deg = {}              # actor.id -> target heading from the last refresh (degrees)
+        self._current_heading_deg = {}      # actor.id -> heading actually applied this tick (ramping toward target)
+        self._ramp_rate_deg_s = {}          # actor.id -> CARLA-sign deg/s to ramp _current_heading_deg at
         self._distance_since_refresh = {}   # actor.id -> meters traveled since last heading refresh
         self._time_since_heading_change = {}  # actor.id -> seconds accumulated since heading last changed
         self._yaw_rate_deg_s = {}           # actor.id -> average yaw rate over the last refresh interval
@@ -260,12 +272,30 @@ class LaneAdvancer:
                 # is actually being sampled here, not sensor noise to smooth
                 # away). This IS the true average angular rate over that
                 # interval, not an approximation of some other ground truth.
-                self._yaw_rate_deg_s[actor.id] = _angle_diff_deg(new_heading_deg, old_heading_deg) / elapsed_s
+                carla_sign_rate_deg_s = _angle_diff_deg(new_heading_deg, old_heading_deg) / elapsed_s
+                # Negated: CARLA's raw yaw is left-handed (+y = right), so a positive
+                # CARLA heading delta is a rightward turn - the opposite of our
+                # +y-left convention, where positive yaw_rate means turning left.
+                # Same right-to-left flip frame_convert.py applies to position/velocity
+                # (dist_y = -_dot(delta, right)), applied here to the rotational rate.
+                self._yaw_rate_deg_s[actor.id] = -carla_sign_rate_deg_s
+                self._ramp_rate_deg_s[actor.id] = carla_sign_rate_deg_s
             self._heading_deg[actor.id] = new_heading_deg
             self._time_since_heading_change[actor.id] = 0.0
             distance_since = 0.0
+            if actor.id not in self._current_heading_deg:
+                self._current_heading_deg[actor.id] = new_heading_deg
 
-        heading_deg = self._heading_deg[actor.id]
+        target_heading_deg = self._heading_deg[actor.id]
+        heading_deg = self._current_heading_deg.get(actor.id, target_heading_deg)
+        ramp_rate_deg_s = self._ramp_rate_deg_s.get(actor.id, 0.0)
+        heading_deg += ramp_rate_deg_s * dt_s
+        # Don't overshoot past the target between refreshes.
+        remaining_deg = _angle_diff_deg(target_heading_deg, heading_deg)
+        if remaining_deg * ramp_rate_deg_s < 0.0:
+            heading_deg = target_heading_deg
+        self._current_heading_deg[actor.id] = heading_deg
+
         transform = actor.get_transform()
         yaw_rad = math.radians(heading_deg)
         transform.location.x += step_m * math.cos(yaw_rad)
@@ -277,8 +307,10 @@ class LaneAdvancer:
 
     def yaw_rate_rad_s(self, actor_id: int) -> float:
         """Ground-truth average yaw rate over the actor's most recent
-        heading-refresh interval (0.0 before its first refresh). Matches the
-        reference VDY producer's radians convention (adas_vdy/ecu/vdy.h /
+        heading-refresh interval (0.0 before its first refresh), in our
+        +y-left sign convention (positive = turning left) - already flipped
+        from CARLA's raw left-handed heading, see the negation above. Matches
+        the reference VDY producer's radians convention (adas_vdy/ecu/vdy.h /
         algo_type.h's YawRateVehDyn_t, alongside fAngle_t's own radians -
         consistent with every other angle already handled in radians
         throughout this bridge, e.g. frame_convert.py)."""
@@ -462,7 +494,14 @@ def run(scenario_path: Path, record: bool = False) -> None:
             ego_dyn_msg.longitudinal.velocity = ego_cfg["speed_mps"]
             ego_dyn_msg.longitudinal.accel = 0.0  # true, not a placeholder: kinematic ego is exactly
                                                    # constant-velocity (LaneAdvancer never changes speed)
-            ego_dyn_msg.lateral.yaw_rate.yaw_rate = lane_advancer.yaw_rate_rad_s(ego_actor.id)
+            ego_yaw_rate_rad_s = lane_advancer.yaw_rate_rad_s(ego_actor.id)
+            ego_dyn_msg.lateral.yaw_rate.yaw_rate = ego_yaw_rate_rad_s
+            ego_dyn_msg.lateral.accel.lat_accel = ego_cfg["speed_mps"] * ego_yaw_rate_rad_s
+            # kinematic (v * yaw_rate) stand-in ground truth, not a measured accelerometer signal -
+            # CARLA's kinematic LaneAdvancer has no bank angle/slip/noise, so this can never diverge
+            # from v * yaw_rate the way a real VDY-measured ay would (docs/df_carla_viz_plan.md §5.1b).
+            # df itself must still consume VehDyn.lateral.accel as a real passthrough, never re-derive
+            # it as v * yaw_rate at the algo boundary - this sim value can't distinguish the two.
 
             if recorder is not None:
                 recorder.update_camera_transform(chase_transform)

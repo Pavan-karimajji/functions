@@ -14,7 +14,7 @@ Recipe for adding a new driving function (e.g. `acc`). Follows plan.md §5.2/§5
    - `CMakeLists.txt` — static lib `fn_<fn>`, links `df_common` + `AdasInterfaces`
 2. **Build wiring** (root `CMakeLists.txt`): the ENABLED_FUNCTIONS loop picks up `<fn>` — verify `add_subdirectory` guard + `ADAS_FN_<FN>_ENABLED` definition fire only when enabled. Add `<fn>` to the default implemented-functions list once real.
 3. **Composition root** (`src/platform/df_sil/df_interface_c.cpp`): add the `#ifdef ADAS_FN_<FN>_ENABLED` block (port instances, function instantiation, runner registration) and extend `dfExec` buffers for the new ports → **bump `dfApiVersion()`**.
-4. **Calibration**: add `<fn>:` section to `projects/base/default.yaml` (staleness limits at minimum, ALL_CAPS+prefix names, e.g. `<FN>_MAX_AGE_OBJECTS_S`) — and to every other `projects/<name>/default.yaml` that exists (each project file is complete/standalone, no inheritance from `base`; see `docs/project_scoped_params.md`).
+4. **Calibration**: add `<fn>:` section to `src/project/base/default.yaml` (staleness limits at minimum, ALL_CAPS+prefix names, e.g. `<FN>_MAX_AGE_OBJECTS_S`) — and to every other `src/project/<name>/default.yaml` that exists (each project file is complete/standalone, no inheritance from `base`; see `docs/project_scoped_params.md`).
 5. **Tests** (test-first, per docs/df_swr_tests.md):
    - `tests/unit/<fn>/test_<fn>_function.cpp` — mirror the `AebFunctionTest` pattern (ACTIVE/DEGRADED/heartbeat cases minimum)
    - extend `InterfaceCApiTest` round-trip for the new buffers

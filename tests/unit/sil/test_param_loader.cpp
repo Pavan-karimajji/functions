@@ -48,7 +48,7 @@ TEST(ParamLoaderTest, MissingFileFallsBackToCallerDefaultEverywhere) {
   EXPECT_DOUBLE_EQ(loader.root().get<double>("EGO_WHEELBASE_M", 9.0), 9.0);
 }
 
-// Real projects/base and projects/proj_alpha default.yaml files (not
+// Real src/project/base and src/project/proj_alpha default.yaml files (not
 // synthetic fixtures) — proves the project-scoped calibration mechanism
 // (plan.md item 9, docs/project_scoped_params.md): pointing dfInit's
 // configPath at a different project folder genuinely loads different

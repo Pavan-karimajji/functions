@@ -45,9 +45,9 @@ typedef struct {
 /* Monotonic version, bumped whenever dfExec's signature/buffer semantics change (§5.8 item 2). */
 DF_API int dfApiVersion(void);
 
-/* configPath: path to a YAML file shaped like projects/base/default.yaml (or any
-   other project's default.yaml, e.g. projects/proj_alpha/default.yaml — same
-   shape, different calibration numbers). Returns NULL on error. */
+/* configPath: path to a YAML file shaped like src/project/base/default.yaml
+   (or any other project's default.yaml, e.g. src/project/proj_alpha/default.yaml
+   — same shape, different calibration numbers). Returns NULL on error. */
 DF_API void* dfInit(const char* configPath);
 
 /* One cycle. objects/egoDyn: serialized GenObjectList/VehDyn (NULL if not received this tick).

@@ -1,7 +1,7 @@
 # Per-project x per-part toolchain/platform mapping for this component.
 #
 # Two other axes are resolved elsewhere, not here:
-#   - project  (which calibration numbers: projects/<name>/default.yaml)   -> superproject conf/<project>.yaml
+#   - project  (which calibration numbers: src/project/<name>/default.yaml) -> superproject conf/<project>.yaml
 #   - part     (which kind of deliverable: sil, later production/doc)     -> superproject conf/<project>.yaml
 # This file only answers, for a given project+part already chosen upstream,
 # which of *this component's own* toolchain presets to build with.

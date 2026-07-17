@@ -61,7 +61,7 @@ import df_ctypes  # noqa: E402 - must follow the sys.path insert above
 MODULES_ROOT = DF_ROOT.parent          # modules/
 INTERFACES_GENERATED_PY = MODULES_ROOT / "interfaces" / "build" / "generated_py"
 DEFAULT_DLL_PATH = DF_ROOT / "build-sil-vs2026" / "src" / "platform" / "df_sil" / "Release" / "df_sil.dll"
-DEFAULT_CONFIG_PATH = DF_ROOT / "projects" / "base" / "default.yaml"
+DEFAULT_CONFIG_PATH = DF_ROOT / "src" / "project" / "base" / "default.yaml"
 CARLA_TESTRUNS_DIR = DF_ROOT / "tests" / "carla_testruns"
 EXPORTS_DIR = CARLA_TESTRUNS_DIR / "exports"
 DEFAULT_MCAP_NAME = "canonical_10mps_30m.mcap"

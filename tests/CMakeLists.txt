@@ -36,7 +36,7 @@ add_executable(df_tests ${DF_TEST_SOURCES})
 
 target_compile_definitions(df_tests PRIVATE
     ADAS_DF_TEST_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures"
-    ADAS_DF_PROJECTS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../projects"
+    ADAS_DF_PROJECTS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../src/project"
 )
 
 target_link_libraries(df_tests PRIVATE

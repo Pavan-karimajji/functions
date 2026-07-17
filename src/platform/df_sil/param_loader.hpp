@@ -25,8 +25,9 @@
 
 namespace adas::df {
 
-// Loads one YAML file shaped like projects/base/default.yaml (one top-level
-// section per function name) and hands out each function's section. A missing file
+// Loads one YAML file shaped like src/project/base/default.yaml (one
+// top-level section per function name) and hands out each function's
+// section. A missing file
 // or missing section is not an error here — it degrades to an empty
 // DfParams, so a function's init() falls back to its own hardcoded
 // defaults. Lives here (not src/component/...) because it does disk I/O —
@@ -43,9 +44,9 @@ public:
   DfParams section(const std::string& functionName) const;
 
   // Whole file as one DfParams — for flat, non-per-function files like
-  // projects/base/ego_params.yaml (as opposed to section(), which is for
-  // files shaped like projects/base/default.yaml: one top-level section per
-  // function).
+  // shared_config's projects/base/vehicle/ego_params.yaml (as opposed to
+  // section(), which is for files shaped like src/project/base/default.yaml:
+  // one top-level section per function).
   DfParams root() const;
 
 private:
