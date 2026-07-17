@@ -12,6 +12,7 @@ camera-image overlays once camera-based perception exists.
 """
 
 import math
+import tkinter as tk
 
 import cv2
 import numpy as np
@@ -42,6 +43,14 @@ COLOR_WARNING = (0, 0, 255)
 COLOR_TEXT = (255, 255, 255)
 COLOR_AXIS = (90, 200, 90)
 COLOR_CURSOR = (200, 200, 200)
+
+# Popup styling (tkinter, hex - separate from the OpenCV BGR palette above).
+# Dark theme matching the BEV canvas's own look, not tkinter's default gray.
+POPUP_BG = "#181818"
+POPUP_FG = "#e8e8e8"
+POPUP_FIELD_FG = "#8a8a8a"
+POPUP_ACCENT_EGO = "#3ca0e6"     # matches COLOR_EGO
+POPUP_ACCENT_OBJECT = "#00b0b0"  # matches COLOR_OBJECT (teal)
 
 # GenObject.general.contributingSensors bitmask (bit 0 = camera, bit 1 = radar
 # - .claude/skills/naming_conventions.md's reference-derived-additions rule,
@@ -119,6 +128,45 @@ def _draw_origin_and_axes(canvas) -> None:
                 cv2.FONT_HERSHEY_SIMPLEX, 0.35, COLOR_AXIS, 1, cv2.LINE_AA)
 
 
+def _hit_test_box(px_x: int, px_y: int, dist_x: float, dist_y: float, length_m: float, width_m: float) -> bool:
+    """Same box geometry as _draw_box - a click lands on an entity if it
+    falls inside the exact rectangle drawn for it."""
+    cx, cy = _to_px(dist_x, dist_y)
+    half_l = int(length_m / 2 * PX_PER_METER)
+    half_w = int(width_m / 2 * PX_PER_METER)
+    return (cx - half_w) <= px_x <= (cx + half_w) and (cy - half_l) <= px_y <= (cy + half_l)
+
+
+def _object_summary_fields(obj) -> list:
+    """Important-kinematics-only summary for the click-to-inspect popup
+    (docs/df_carla_viz_plan.md §5.1c) - trimmed to what's already meaningful
+    elsewhere in this file (the on-canvas label uses the same fields), not
+    GenObject's full ~20-field Kinematics sub-message. (name, value) pairs
+    for the popup's aligned grid layout. Grow this list later if a specific
+    field is needed."""
+    k = obj.kinematic
+    return [
+        ("id", f"{obj.general.ui_id}"),
+        ("dist_x", f"{k.f_dist_x:.2f} m"),
+        ("dist_y", f"{k.f_dist_y:.2f} m"),
+        ("vrel_x", f"{k.f_vrel_x:.2f} m/s"),
+        ("vrel_y", f"{k.f_vrel_y:.2f} m/s"),
+    ]
+
+
+def _ego_summary_fields(veh_dyn_msg) -> list:
+    """Important-kinematics-only summary for ego - the four signals this
+    project's ego-state spec (docs/df_carla_viz_plan.md §5.1b) actually
+    cares about, not VehDyn's full ~50-field structure. Grow this list later
+    if a specific field is needed."""
+    return [
+        ("vx", f"{veh_dyn_msg.longitudinal.velocity:.2f} m/s"),
+        ("ax", f"{veh_dyn_msg.longitudinal.accel:.2f} m/s^2"),
+        ("yaw_rate", f"{veh_dyn_msg.lateral.yaw_rate.yaw_rate:.4f} rad/s"),
+        ("ay", f"{veh_dyn_msg.lateral.accel.lat_accel:.4f} m/s^2"),
+    ]
+
+
 def _is_padding_slot(obj) -> bool:
     """Default-constructed (all-zero) GenObjects fill unused slots - see
     carla_bridge.py's fill_object_slots(). A real object can never sit
@@ -184,9 +232,109 @@ class BevViewer:
     def __init__(self):
         self._window_open = False
         self._cursor_px = None  # (px, py) of the last mouse-move event, or None before the first one
+        self._latest_objects_msg = None   # this tick's GenObjectList, for click hit-testing + popup live data
+        self._latest_veh_dyn_msg = None   # this tick's VehDyn, same purpose for the ego popup
+        self._tk_root = None  # hidden Tk root, created lazily - only hosts popup Toplevels
+        self._popups = {}     # key -> {"toplevel": Toplevel, "value_labels": {field_name: Label}}
+                               # key is ("ego",) or ("object", ui_id) - independent popups, each open
+                               # until the user closes it (docs/df_carla_viz_plan.md §5.1c)
 
     def _on_mouse(self, event, x, y, flags, userdata) -> None:
         self._cursor_px = (x, y)
+        if event == cv2.EVENT_LBUTTONDOWN:
+            self._handle_click(x, y)
+
+    def _handle_click(self, x: int, y: int) -> None:
+        """Click-to-inspect (docs/df_carla_viz_plan.md §5.1c): clicking an
+        object or ego box opens (or brings forward + refreshes) its own
+        popup - independent of any other popup already open. Clicking empty
+        space is a no-op; popups are dismissed only by the user closing them.
+        Objects checked first since ego sits at a fixed spot objects rarely
+        overlap."""
+        if self._latest_objects_msg is not None:
+            for obj in self._latest_objects_msg.objects:
+                if _is_padding_slot(obj):
+                    continue
+                k = obj.kinematic
+                if _hit_test_box(x, y, k.f_dist_x, k.f_dist_y, OBJECT_LENGTH_M, OBJECT_WIDTH_M):
+                    key = ("object", obj.general.ui_id)
+                    self._open_or_update_popup(
+                        key, f"GenObject  id {obj.general.ui_id}",
+                        POPUP_ACCENT_OBJECT, _object_summary_fields(obj))
+                    return
+        if _hit_test_box(x, y, 0.0, 0.0, EGO_LENGTH_M, EGO_WIDTH_M):
+            key = ("ego",)
+            self._open_or_update_popup(
+                key, "Ego VehDyn", POPUP_ACCENT_EGO, _ego_summary_fields(self._latest_veh_dyn_msg))
+
+    def _ensure_tk_root(self) -> None:
+        if self._tk_root is None:
+            self._tk_root = tk.Tk()
+            self._tk_root.withdraw()  # never shown itself - only hosts popup Toplevels
+
+    def _open_or_update_popup(self, key: tuple, title: str, accent_hex: str, fields: list) -> None:
+        self._ensure_tk_root()
+        if key in self._popups:
+            self._set_popup_fields(key, fields)
+            self._popups[key]["toplevel"].lift()
+            return
+        popup = tk.Toplevel(self._tk_root)
+        popup.title(title)
+        popup.configure(bg=POPUP_BG)
+        popup.resizable(False, False)
+        tk.Frame(popup, bg=accent_hex, height=4).pack(fill="x")
+        tk.Label(popup, text=title, bg=POPUP_BG, fg=POPUP_FG, font=("Segoe UI", 11, "bold"),
+                 anchor="w").pack(fill="x", padx=16, pady=(10, 8))
+        body = tk.Frame(popup, bg=POPUP_BG)
+        body.pack(fill="both", padx=16, pady=(0, 14))
+        value_labels = {}
+        for row, (name, value) in enumerate(fields):
+            tk.Label(body, text=name, bg=POPUP_BG, fg=POPUP_FIELD_FG, font=("Consolas", 10),
+                     anchor="w").grid(row=row, column=0, sticky="w", padx=(0, 24), pady=3)
+            value_label = tk.Label(body, text=value, bg=POPUP_BG, fg=POPUP_FG,
+                                    font=("Consolas", 10, "bold"), anchor="e")
+            value_label.grid(row=row, column=1, sticky="e", pady=3)
+            value_labels[name] = value_label
+        popup.protocol("WM_DELETE_WINDOW", lambda k=key: self._close_popup(k))
+        self._popups[key] = {"toplevel": popup, "value_labels": value_labels}
+
+    def _set_popup_fields(self, key: tuple, fields: list) -> None:
+        value_labels = self._popups[key]["value_labels"]
+        for name, value in fields:
+            if name in value_labels:
+                value_labels[name].config(text=value)
+
+    def _close_popup(self, key: tuple) -> None:
+        info = self._popups.pop(key, None)
+        if info is not None:
+            info["toplevel"].destroy()
+
+    def _refresh_popups(self) -> None:
+        """Re-reads this tick's live data into every open popup - so a
+        selection made a few ticks ago (e.g. while --step-ing through a run)
+        keeps showing fresh values instead of a stale click-time snapshot.
+        Also pumps Tk's event loop, same reasoning as cv2.waitKey(1) for the
+        BEV window - keeps popups responsive (movable, closable) between
+        ticks without needing their own blocking mainloop."""
+        if not self._popups:
+            return
+        for key in list(self._popups.keys()):
+            if key[0] == "object":
+                obj_id = key[1]
+                obj = next(
+                    (o for o in (self._latest_objects_msg.objects if self._latest_objects_msg else [])
+                     if not _is_padding_slot(o) and o.general.ui_id == obj_id),
+                    None)
+                if obj is None:
+                    self._close_popup(key)  # object gone this tick - dismiss rather than show stale data
+                    continue
+                self._set_popup_fields(key, _object_summary_fields(obj))
+            else:
+                if self._latest_veh_dyn_msg is None:
+                    continue
+                self._set_popup_fields(key, _ego_summary_fields(self._latest_veh_dyn_msg))
+        self._tk_root.update_idletasks()
+        self._tk_root.update()
 
     def _draw_cursor_readout(self, canvas) -> None:
         """Live pixel -> meter readout under the mouse, for debugging the
@@ -202,6 +350,8 @@ class BevViewer:
                     cv2.FONT_HERSHEY_SIMPLEX, 0.4, COLOR_CURSOR, 1, cv2.LINE_AA)
 
     def show_tick(self, objects_msg, outputs, veh_dyn_msg=None) -> None:
+        self._latest_objects_msg = objects_msg
+        self._latest_veh_dyn_msg = veh_dyn_msg
         frame = build_bev_frame(objects_msg, outputs, veh_dyn_msg)
         if not self._window_open:
             cv2.namedWindow(WINDOW_NAME)
@@ -209,15 +359,20 @@ class BevViewer:
         self._draw_cursor_readout(frame)
         cv2.imshow(WINDOW_NAME, frame)
         cv2.waitKey(1)  # pumps the window's event queue; does not block/consume real time
+        self._refresh_popups()
         self._window_open = True
 
     def wait_for_key(self, message: str) -> None:
         """Blocks on a keypress in the BEV window - shared by hold() (end of
-        run) and --step's per-cycle advance (df_dll_sim_mcap.py). Also pumps
-        the window's event loop while blocked, so it doesn't look frozen."""
+        run) and --step's per-cycle advance (df_dll_sim_mcap.py). Polls in
+        short slices rather than a single cv2.waitKey(0): a real
+        cv2.waitKey(0) would block this thread for the whole wait, starving
+        any open Tk popup's event loop and leaving it looking like "Not
+        Responding" until the next keypress."""
         if self._window_open:
             print(message)
-            cv2.waitKey(0)
+            while cv2.waitKey(50) == -1:
+                self._refresh_popups()
 
     def hold(self) -> None:
         """Blocks on a keypress so the final frame stays visible after
@@ -225,5 +380,10 @@ class BevViewer:
         self.wait_for_key("[viz] run complete - press any key in the BEV window to close it")
 
     def close(self) -> None:
+        for key in list(self._popups.keys()):
+            self._close_popup(key)
+        if self._tk_root is not None:
+            self._tk_root.destroy()
+            self._tk_root = None
         if self._window_open:
             cv2.destroyWindow(WINDOW_NAME)
