@@ -13,3 +13,12 @@ target_link_libraries(df_sil PRIVATE df_common)
 if("aeb" IN_LIST ENABLED_FUNCTIONS)
     target_link_libraries(df_sil PRIVATE fn_aeb)
 endif()
+
+# Needed for a real `conan create` package (plan.md item 14) - the SIL DLL
+# deliverable, same pattern as adas-interfaces' own install() (plan.md item 13).
+install(TARGETS df_sil
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+)
+install(FILES df_interface_c.h DESTINATION include)

@@ -1,28 +1,78 @@
 from conan import ConanFile
-from conan.tools.cmake import CMakeDeps, CMakeToolchain
+from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain
 from pathlib import Path
-import os
 import re
 import yaml
 
 
 class DfConan(ConanFile):
     name = "adas-df"
-    package_type = "application"
+    # The real deliverable is df_sil.dll (+ import lib + df_interface_c.h),
+    # not a standalone executable - see plan.md item 14.
+    package_type = "shared-library"
 
     settings = "os", "arch", "compiler", "build_type"
 
+    # Real Conan option (not an env var) so it participates in package_id
+    # automatically - plan.md item 14 Bug #16: ADAS_PROJECT used to be read
+    # via plain os.environ.get() inside requirements(), invisible to
+    # Conan's package identity, so a base build and a cus1 build produced
+    # the byte-identical package_id. "ANY" (not an enumerated list) so a
+    # new project needs no conanfile.py change - conf/build.yml's own
+    # variants: dict stays the single source of truth (an unknown project
+    # still fails naturally in _build_conf() below with a KeyError).
+    #
+    # enabled_functions (plan.md item 16, docs/df_enabled_functions.md) is
+    # deliberately NOT a second Conan option here, even though it's also
+    # per-project data in conf/build.yml. It's a pure function of `project`
+    # (conf/build.yml's own enabled_functions: list, keyed by project) with
+    # no independent value of its own - there's nothing for a user to
+    # freely set via -o. Tried making it a real option first: config_options()
+    # runs too early (self.options.project is still its class default there,
+    # before -o project=cus1 gets merged in - confirmed live, the derived
+    # value silently used "base"'s list even when building cus1);
+    # configure() runs too late (Conan raises "Incorrect attempt to modify
+    # option" - self.options values are already locked in by then). Neither
+    # hook can correctly derive one of your own option's values from
+    # another of your own options' final value. Fixed properly via
+    # package_id() below instead - the Conan-idiomatic hook for exactly
+    # this "fold a computed value into the hash without it being a
+    # freely-settable option" case.
+    options = {
+        "project": ["ANY"],
+    }
+
     default_options = {
+        "project": "base",
         "protobuf/*:shared": False,
         "protobuf/*:with_zlib": False,
         "yaml-cpp/*:shared": False,
     }
 
-    def _build_conf(self):
+    # Needed so a real `conan create` (run from the Conan cache's exported
+    # copy, not this checkout) has access to the same files build.bat's
+    # direct cmake invocation already sees. conf/ is `exports` (not
+    # exports_sources) because requirements()/build_requirements() below
+    # read conf/build.yml, and those methods run before exports_sources
+    # are materialized - only `exports` is available that early.
+    # CMakePresets.json is deliberately NOT exported: it's build.bat's own
+    # hand-authored presets (used for its --output-folder-driven local dev
+    # flow), and would collide with the CMakePresets.json Conan's own
+    # CMakeToolchain generates for `conan create`'s internal build - that
+    # one doesn't need ours, it uses its own auto-generated preset.
+    exports = "conf/*"
+    exports_sources = "CMakeLists.txt", "src/*"
+
+    def _build_conf_for(self, project):
         conf_path = Path(self.recipe_folder) / "conf" / "build.yml"
         conf = yaml.safe_load(conf_path.read_text(encoding="utf-8"))
-        project = os.environ.get("ADAS_PROJECT", "base")
         return conf["variants"][project]
+
+    def _build_conf(self):
+        return self._build_conf_for(str(self.options.project))
+
+    def _enabled_functions_for(self, project):
+        return ";".join(self._build_conf_for(project).get("enabled_functions", ["aeb"]))
 
     def requirements(self):
         for ref in self._build_conf().get("requires", []):
@@ -48,3 +98,34 @@ class DfConan(ConanFile):
         deps.build_context_activated = ["protobuf"]
         deps.build_context_suffix = {"protobuf": "_BUILD"}
         deps.generate()
+
+    def build(self):
+        cmake = CMake(self)
+        cmake.configure(
+            variables={"ENABLED_FUNCTIONS": self._enabled_functions_for(str(self.options.project))})
+        cmake.build()
+
+    def package(self):
+        cmake = CMake(self)
+        cmake.install()
+
+    def package_id(self):
+        # Folds the per-project enabled_functions list into the package_id
+        # hash without it being a real, independently-settable option -
+        # self.info.options accepts arbitrary keys purely for hashing
+        # purposes (plan.md item 16). Reads self.info.options.project (NOT
+        # self.options.project - confirmed live: "'self.options' access in
+        # 'package_id()' method is forbidden", a hard Conan error) - by the
+        # time package_id() runs, self.info.options already mirrors the
+        # recipe's final resolved options, `project` included. So a project
+        # whose enabled_functions genuinely diverges automatically gets a
+        # distinct package_id too - no separate crossed-axis publish loop
+        # needed, since each project's own value is already baked in
+        # per-variant here.
+        self.info.options.enabled_functions = self._enabled_functions_for(
+            str(self.info.options.project))
+
+    def package_info(self):
+        self.cpp_info.libs = ["df_sil"]
+        self.cpp_info.set_property("cmake_target_name", "AdasDf::AdasDf")
+        self.cpp_info.set_property("cmake_file_name", "AdasDf")

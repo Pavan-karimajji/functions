@@ -29,16 +29,33 @@
 # variants/<project> only - one level up from platforms:, deliberately NOT
 # further nested per-part, since which third-party libraries a component
 # needs doesn't vary by build kind (sil/gtest/standalone all link the same
-# ones) - only platforms: is genuinely part-scoped. build.bat sets an
-# ADAS_PROJECT env var (from its own <project> CLI arg) before calling
-# `conan install`, so conanfile.py can resolve the matching branch (default
-# base if unset, e.g. a bare `conan install .`). Today's values are identical
+# ones) - only platforms: is genuinely part-scoped. build.bat passes
+# -o project=<project> (from its own <project> CLI arg) to `conan install`,
+# so conanfile.py can resolve the matching branch via its `project` Conan
+# option (default base if unset, e.g. a bare `conan install .` - not an
+# env var, per plan.md item 14 Bug #16: an env var here would be invisible
+# to Conan's package_id, letting base/cus1 builds silently collide once
+# they diverge). Today's values are identical
 # across base/cus1 - deliberate skeleton-for-scale duplication (same
 # reasoning as platforms:'s own per-project copies), not because a real
 # difference exists yet. Real per-project version divergence is now just a
 # data change, no schema/mechanism change, whenever it's needed - proven by
 # temporarily diverging cus1's yaml-cpp version during verification:
 # base built clean, cus1 failed on its own (reverted) fake version.
+#
+# enabled_functions: (plan.md item 16, docs/df_enabled_functions.md) - which
+# of src/component/'s per-function subfolders get compiled in, mechanically
+# consumed by conanfile.py's configure() (self.options.enabled_functions is
+# derived from this list, joined with ";", NOT independently settable via
+# -o - same "conf/build.yml is the single source of truth" rule as
+# requires: above). Both variants list only "aeb" today because that's the
+# only real implementation that exists - acc/lca/lka/tja under
+# src/component/ are still empty .gitkeep placeholders (see
+# .claude/workflows/add_function.md), not because base/cus1 are assumed to
+# need the same functions forever. Adding a real second function here is a
+# two-step change: (1) implement it under src/component/<fn>/ and gate it in
+# src/component/CMakeLists.txt (if("<fn>" IN_LIST ENABLED_FUNCTIONS) ...),
+# same as add_function.md already documents, (2) list it here per variant.
 
 variants:
   base:
@@ -49,6 +66,8 @@ variants:
       - adas-shared-config/1.0.0
     tool_requires:
       - protobuf/3.21.12
+    enabled_functions:
+      - aeb
     sil:
       platforms:
         - build: vs2026
@@ -68,6 +87,8 @@ variants:
       - adas-shared-config/1.0.0
     tool_requires:
       - protobuf/3.21.12
+    enabled_functions:
+      - aeb
     sil:
       platforms:
         - build: vs2026
