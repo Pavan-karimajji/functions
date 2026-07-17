@@ -46,7 +46,7 @@ typedef struct {
 DF_API int dfApiVersion(void);
 
 /* configPath: path to a YAML file shaped like src/project/base/default.yaml
-   (or any other project's default.yaml, e.g. src/project/proj_alpha/default.yaml
+   (or any other project's default.yaml, e.g. src/project/cus1/default.yaml
    — same shape, different calibration numbers). Returns NULL on error. */
 DF_API void* dfInit(const char* configPath);
 

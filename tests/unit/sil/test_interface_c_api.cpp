@@ -23,7 +23,7 @@ namespace {
 
 // ADAS_DF_PROJECTS_DIR is injected by tests/CMakeLists.txt.
 constexpr auto kBaseDefault = ADAS_DF_PROJECTS_DIR "/base/default.yaml";
-constexpr auto kProjAlphaDefault = ADAS_DF_PROJECTS_DIR "/proj_alpha/default.yaml";
+constexpr auto kCus1Default = ADAS_DF_PROJECTS_DIR "/cus1/default.yaml";
 
 std::vector<uint8_t> serialize(const google::protobuf::Message& msg) {
   std::string bytes;
@@ -139,7 +139,7 @@ TEST(InterfaceCApiTest, EndToEndWarningThroughDll) {
 }
 
 TEST(InterfaceCApiTest, ThresholdIsProjectScoped) {
-  // Same object, TTC ~1.1s: below proj_alpha's 1.2s threshold, not below base's 1.0s.
+  // Same object, TTC ~1.1s: below cus1's 1.2s threshold, not below base's 1.0s.
   auto objectsMsg = oneClosingObject(/*distX=*/11.0f, /*vrelX=*/-10.0f, /*uiId=*/1);
   adas::common::VehDyn egoDynMsg;
   auto objectsBytes = serialize(objectsMsg);
@@ -157,14 +157,14 @@ TEST(InterfaceCApiTest, ThresholdIsProjectScoped) {
   EXPECT_FALSE(baseResult.b_latent_pre_warning_active());
   dfShutdown(baseHandle);
 
-  void* projAlphaHandle = dfInit(kProjAlphaDefault);
-  ASSERT_NE(projAlphaHandle, nullptr);
-  std::vector<uint8_t> projAlphaBuf(256);
-  DfProBuf projAlphaOutputs{projAlphaBuf.data(), projAlphaBuf.size(), 0, 0};
-  EXPECT_EQ(dfExec(projAlphaHandle, 0.05, &objects, &egoDyn, &projAlphaOutputs, nullptr), 1);
-  adas::df::AebOutputs projAlphaResult;
+  void* cus1Handle = dfInit(kCus1Default);
+  ASSERT_NE(cus1Handle, nullptr);
+  std::vector<uint8_t> cus1Buf(256);
+  DfProBuf cus1Outputs{cus1Buf.data(), cus1Buf.size(), 0, 0};
+  EXPECT_EQ(dfExec(cus1Handle, 0.05, &objects, &egoDyn, &cus1Outputs, nullptr), 1);
+  adas::df::AebOutputs cus1Result;
   ASSERT_TRUE(
-      projAlphaResult.ParseFromArray(projAlphaBuf.data(), static_cast<int>(projAlphaOutputs.len)));
-  EXPECT_TRUE(projAlphaResult.b_latent_pre_warning_active());
-  dfShutdown(projAlphaHandle);
+      cus1Result.ParseFromArray(cus1Buf.data(), static_cast<int>(cus1Outputs.len)));
+  EXPECT_TRUE(cus1Result.b_latent_pre_warning_active());
+  dfShutdown(cus1Handle);
 }

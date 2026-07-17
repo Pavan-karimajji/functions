@@ -18,7 +18,7 @@ namespace {
 constexpr auto kDfParamsFixture = ADAS_DF_TEST_FIXTURE_DIR "/df_params_test.yaml";
 constexpr auto kEgoParamsFixture = ADAS_DF_TEST_FIXTURE_DIR "/ego_params_test.yaml";
 constexpr auto kBaseDefault = ADAS_DF_PROJECTS_DIR "/base/default.yaml";
-constexpr auto kProjAlphaDefault = ADAS_DF_PROJECTS_DIR "/proj_alpha/default.yaml";
+constexpr auto kCus1Default = ADAS_DF_PROJECTS_DIR "/cus1/default.yaml";
 
 TEST(ParamLoaderTest, SectionReadsExistingKeyFromNamedSection) {
   ParamLoader loader(kDfParamsFixture);
@@ -48,18 +48,18 @@ TEST(ParamLoaderTest, MissingFileFallsBackToCallerDefaultEverywhere) {
   EXPECT_DOUBLE_EQ(loader.root().get<double>("EGO_WHEELBASE_M", 9.0), 9.0);
 }
 
-// Real src/project/base and src/project/proj_alpha default.yaml files (not
+// Real src/project/base and src/project/cus1 default.yaml files (not
 // synthetic fixtures) — proves the project-scoped calibration mechanism
 // (plan.md item 9, docs/project_scoped_params.md): pointing dfInit's
 // configPath at a different project folder genuinely loads different
 // numbers, with zero merge/override logic (each file is a complete,
 // standalone set).
-TEST(ParamLoaderTest, BaseAndProjAlphaLoadDifferentAebCalibration) {
+TEST(ParamLoaderTest, BaseAndCus1LoadDifferentAebCalibration) {
   ParamLoader base(kBaseDefault);
-  ParamLoader projAlpha(kProjAlphaDefault);
+  ParamLoader cus1(kCus1Default);
 
   EXPECT_DOUBLE_EQ(base.section("aeb").get<double>("AEB_TTC_BRAKE_THRESHOLD_S", -1.0), 1.2);
-  EXPECT_DOUBLE_EQ(projAlpha.section("aeb").get<double>("AEB_TTC_BRAKE_THRESHOLD_S", -1.0), 1.4);
+  EXPECT_DOUBLE_EQ(cus1.section("aeb").get<double>("AEB_TTC_BRAKE_THRESHOLD_S", -1.0), 1.4);
 }
 
 TEST(ParamLoaderTest, RealBaseFileMatchesFormerConfigDefaultYamlValues) {

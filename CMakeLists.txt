@@ -17,7 +17,7 @@ endif()
 # Set by build.bat's third argument (build.bat <part> <platform> <project>);
 # override manually with -DADAS_PROJECT=<name>.
 if(NOT DEFINED ADAS_PROJECT)
-    set(ADAS_PROJECT base CACHE STRING "Which src/project/<name> calibration folder to build against, e.g. base, proj_alpha")
+    set(ADAS_PROJECT base CACHE STRING "Which src/project/<name> calibration folder to build against, e.g. base, cus1")
 endif()
 
 # Compile-time bound on how many GenObjects any function's exec() processes

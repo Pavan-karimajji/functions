@@ -1,5 +1,5 @@
 # Illustrative example project — deliberately different values from
-# projects/base/default.yaml, not a real second vehicle program. Demonstrates
+# src/project/base/default.yaml, not a real second vehicle program. Demonstrates
 # that dfInit(configPath) pointed at a project folder changes behavior.
 
 aeb:
