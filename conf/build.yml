@@ -56,6 +56,25 @@
 # two-step change: (1) implement it under src/component/<fn>/ and gate it in
 # src/component/CMakeLists.txt (if("<fn>" IN_LIST ENABLED_FUNCTIONS) ...),
 # same as add_function.md already documents, (2) list it here per variant.
+#
+# package_kind/layout_kind/package_id_extra: plan.md item 10
+# (docs/build_conanfile_commonization_plan.md §2) - data read by the common
+# scripts/build.py and conanfile.py templates so this component's real build
+# shape never becomes a code branch in either shared file.
+#
+# Target keys (sil:/gtest: below, §2.1a, revised 2026-07-20 - a proven
+# external reference's own variants: shape, mf_trjpla.yaml, re-checked live
+# this session): there is deliberately no separate targets: field listing
+# valid target names - every real target is its own explicit key under
+# variants.<project>, and build.py discovers valid targets straight from
+# those keys. gtest: reuses sil's platforms: list via a YAML anchor/alias
+# (&base_platforms / *base_platforms) since both build for the same
+# toolchain today - not two independently-maintained copies of the same
+# list.
+
+package_kind: library
+layout_kind: output_folder
+package_id_extra: [enabled_functions]
 
 variants:
   base:
@@ -69,16 +88,18 @@ variants:
     enabled_functions:
       - aeb
     sil:
-      platforms:
+      platforms: &base_platforms
         - build: vs2026
         # - build: vs2026_debug      # <- illustrative only: no debug preset
         #                            #    exists yet in CMakePresets.json
         # - build: aarch64_qcc_qnx   # <- illustrative only: needs its own
         #                            #    build.bat target + toolchain file
         #                            #    first (plan.md item 7)
-      # production:                  # <- added once plan.md's QNX/Orin/TDA4VM
-      #   platforms:                 #    item exists; same file, new part key
-      #     - build: aarch64_qcc_qnx
+    gtest:
+      platforms: *base_platforms   # same list, aliased - not re-typed
+    # production:                  # <- added once plan.md's QNX/Orin/TDA4VM
+    #   platforms:                 #    item exists; same file, new part key
+    #     - build: aarch64_qcc_qnx
   cus1:
     requires:
       - protobuf/3.21.12
@@ -90,5 +111,7 @@ variants:
     enabled_functions:
       - aeb
     sil:
-      platforms:
+      platforms: &cus1_platforms
         - build: vs2026
+    gtest:
+      platforms: *cus1_platforms

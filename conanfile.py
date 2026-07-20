@@ -63,10 +63,12 @@ class DfConan(ConanFile):
     exports = "conf/*"
     exports_sources = "CMakeLists.txt", "src/*"
 
-    def _build_conf_for(self, project):
+    def _conf_yaml(self):
         conf_path = Path(self.recipe_folder) / "conf" / "build.yml"
-        conf = yaml.safe_load(conf_path.read_text(encoding="utf-8"))
-        return conf["variants"][project]
+        return yaml.safe_load(conf_path.read_text(encoding="utf-8"))
+
+    def _build_conf_for(self, project):
+        return self._conf_yaml()["variants"][project]
 
     def _build_conf(self):
         return self._build_conf_for(str(self.options.project))
@@ -110,20 +112,20 @@ class DfConan(ConanFile):
         cmake.install()
 
     def package_id(self):
-        # Folds the per-project enabled_functions list into the package_id
-        # hash without it being a real, independently-settable option -
-        # self.info.options accepts arbitrary keys purely for hashing
-        # purposes (plan.md item 16). Reads self.info.options.project (NOT
-        # self.options.project - confirmed live: "'self.options' access in
-        # 'package_id()' method is forbidden", a hard Conan error) - by the
-        # time package_id() runs, self.info.options already mirrors the
-        # recipe's final resolved options, `project` included. So a project
-        # whose enabled_functions genuinely diverges automatically gets a
-        # distinct package_id too - no separate crossed-axis publish loop
-        # needed, since each project's own value is already baked in
-        # per-variant here.
-        self.info.options.enabled_functions = self._enabled_functions_for(
-            str(self.info.options.project))
+        # Generic form (plan.md item 10, docs/build_conanfile_commonization_plan.md
+        # §6) - folds every conf/build.yml package_id_extra: key into the
+        # package_id hash, replacing what used to be a hand-written
+        # enabled_functions-specific hook. self.info.options accepts
+        # arbitrary keys purely for hashing purposes (plan.md item 16).
+        # Reads self.info.options.project (NOT self.options.project -
+        # confirmed live: "'self.options' access in 'package_id()' method is
+        # forbidden", a hard Conan error) - by the time package_id() runs,
+        # self.info.options already mirrors the recipe's final resolved
+        # options, `project` included, so a project whose value genuinely
+        # diverges automatically gets a distinct package_id too.
+        for key in self._conf_yaml().get("package_id_extra", []):
+            value = self._build_conf_for(str(self.info.options.project)).get(key, [])
+            setattr(self.info.options, key, ";".join(value) if isinstance(value, list) else value)
 
     def package_info(self):
         self.cpp_info.libs = ["df_sil"]
