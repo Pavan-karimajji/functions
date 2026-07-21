@@ -96,13 +96,18 @@ variants:
         # - build: vs2026_debug      # <- illustrative only: no debug preset
         #                            #    exists yet in CMakePresets.json
         # - build: aarch64_qcc_qnx   # <- illustrative only: needs its own
-        #                            #    build.bat target + toolchain file
-        #                            #    first (plan.md item 7)
+        #                            #    toolchain file + preset first
+        #                            #    (plan.md item 8)
     gtest:
       platforms: *base_platforms   # same list, aliased - not re-typed
-    # production:                  # <- added once plan.md's QNX/Orin/TDA4VM
-    #   platforms:                 #    item exists; same file, new part key
-    #     - build: aarch64_qcc_qnx
+    # The rest of the frozen target vocabulary (plan.md item 14,
+    # docs/build_grammar.md) - listed here commented so every component's file
+    # shows the whole vocabulary, uncommented per component as each target
+    # gains a real implementation:
+    # coverage: { platforms: *base_platforms }        # gtest + OpenCppCoverage/gcov
+    # docs:     { platforms: [{ build: noarch }] }    # doxygen; noarch = platform-independent
+    # package:  { platforms: *base_platforms }        # conan create (+ --upload)
+    # prod:     { platforms: [{ build: aarch64_qcc_qnx }, { build: tda4_ti }] }
   cus1:
     requires:
       - protobuf/3.21.12
