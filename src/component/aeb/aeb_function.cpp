@@ -48,7 +48,7 @@ void AebFunction::exec(double dtS) {
     // Bounded to kMaxGenObjects regardless of how many the incoming message
     // actually contains (object_limits.hpp) - caps worst-case execution time
     // and guards against a malformed/oversized message crossing the C API
-    // boundary, mirroring the reference's fixed-array EM_N_OBJECTS budget.
+    // boundary, mirroring the reference's fixed-array EM_N_OBJECTS budget
     const auto& objects = reqPorts_.emGenObjList.data.objects();
     const int numObjects = std::min(objects.size(), static_cast<int>(kMaxGenObjects));
     for (int i = 0; i < numObjects; ++i) {

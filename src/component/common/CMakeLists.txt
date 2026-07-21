@@ -4,8 +4,12 @@ add_library(df_common STATIC
     framework/df_runner.cpp
 )
 target_include_directories(df_common PUBLIC
-    ${CMAKE_SOURCE_DIR}/src   # so "component/common/framework/x.hpp" resolves from anywhere
-    ${CMAKE_SOURCE_DIR}/include
+    # PROJECT_SOURCE_DIR (df's own project(), not CMAKE_SOURCE_DIR - plan.md
+    # item 13) resolves to modules/df whether df is the top-level build or
+    # add_subdirectory()'d into the superproject aggregator, where
+    # CMAKE_SOURCE_DIR would instead point at the aggregate's own root.
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}/include
 )
 target_link_libraries(df_common PUBLIC
     AdasInterfaces::AdasInterfaces

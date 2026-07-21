@@ -30,7 +30,15 @@ if(NOT DEFINED ADAS_MAX_GEN_OBJECTS)
     set(ADAS_MAX_GEN_OBJECTS 50 CACHE STRING "Maximum number of GenObjects processed per exec() cycle")
 endif()
 
-find_package(AdasInterfaces REQUIRED)
+# Guarded (plan.md item 13, docs/build_superbuild_aggregator_plan.md §4) - when
+# the superproject aggregator add_subdirectory()s interfaces in-tree ahead of
+# df, the AdasInterfaces::AdasInterfaces target already exists (via its own
+# ALIAS); skip find_package() entirely rather than resolve it a second time
+# from a Conan package too. Standalone builds (no aggregator) never define
+# that target beforehand, so find_package() still runs exactly as before.
+if(NOT TARGET AdasInterfaces::AdasInterfaces)
+    find_package(AdasInterfaces REQUIRED)
+endif()
 
 add_subdirectory(src/component)
 
