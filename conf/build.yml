@@ -49,7 +49,7 @@
 # derived from this list, joined with ";", NOT independently settable via
 # -o - same "conf/build.yml is the single source of truth" rule as
 # requires: above). Both variants list only "aeb" today because that's the
-# only real implementation that exists - acc/lca/lka/tja under
+# only real implementation that exists - acc/lca/lka/ldw under
 # src/component/ are still empty .gitkeep placeholders (see
 # .claude/workflows/add_function.md), not because base/cus1 are assumed to
 # need the same functions forever. Adding a real second function here is a

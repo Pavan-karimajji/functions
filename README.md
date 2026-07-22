@@ -1,6 +1,6 @@
 ﻿# adas-df
 
-ADAS driving functions: AEB (warning-stage first), ACC, LKA, LCA, TJA. See `plan.md` §5 (superproject root) for the full architecture blueprint.
+ADAS driving functions: AEB (warning-stage first), ACC, LKA, LCA, LDW. See `plan.md` §5 (superproject root) for the full architecture blueprint.
 
 ## Build
 

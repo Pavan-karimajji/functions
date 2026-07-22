@@ -18,3 +18,17 @@ lka:
   LKA_LANE_CENTER_DEADBAND_M: 0.15
   LKA_MAX_STEERING_TORQUE_NM: 3.0
   LKA_MIN_SPEED_MPS: 16.7  # 60 km/h
+
+# lca/ldw: pre-staged calibration placeholders — function code not yet compiled in
+# (not in conf/build.yml enabled_functions). Inert until the function lands;
+# ParamLoader only reads sections the compiled code asks for. See
+# docs/df_enabled_functions.md §6 boundary rule 3.
+lca:
+  LCA_MIN_SPEED_MPS: 8.0
+  LCA_REAR_ZONE_LENGTH_M: 50.0
+  LCA_MAX_AGE_OBJECTS_S: 0.2
+
+ldw:
+  LDW_MIN_SPEED_MPS: 16.7  # 60 km/h
+  LDW_DEPARTURE_WARNING_M: 0.3  # lateral distance to lane marking
+  LDW_MAX_AGE_LANE_S: 0.2

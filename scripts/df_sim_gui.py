@@ -1,61 +1,51 @@
 """
-modules/df/scripts/df_gui.py
+modules/df/scripts/df_sim_gui.py
 
-Developer operations GUI for `df` - a pure launcher over commands that
-already exist (build.bat, carla_bridge.py, df_dll_sim_mcap.py). Every button
-shells out; nothing here reimplements build/CARLA/replay logic or edits a
-YAML value - dropdowns are populated by reading conf/build.yml, CMakePresets,
-and scanning the filesystem, never hardcoded. Subprocess output is NOT
-captured into the GUI - it's left to inherit this app's own console (the cmd
-window gui.bat opened), so there's no in-app log panel to keep in sync;
-buttons just show run/done state. CARLA/Foxglove exe paths are persisted as
-real user-scope Windows env vars (CARLA_ROOT/FOXGLOVE_EXE via setx), not a
-repo-local file - they're machine facts, not per-clone ones.
-See docs/df_dev_gui_plan.md (superproject root) for the full design.
+df-only simulator GUI - CARLA + MCAP replay/Foxglove viz. Split out of the old
+df_gui.py (plan.md item 17): the build/publish half moved to the
+component-agnostic scripts/build_gui.py (identical across every component),
+leaving this file with only the tooling that is genuinely df-specific and
+exists nowhere else. Renamed to say what it is - a simulator launcher, not a
+build tool.
+
+Pure launcher, same rules as before (docs/df_dev_gui_plan.md): every button
+shells out to a command that already exists (carla_bridge.py,
+df_dll_sim_mcap.py); nothing here reimplements CARLA/replay logic or edits a
+YAML value - dropdowns are populated by scanning the filesystem, never
+hardcoded. Subprocess output is NOT captured into the GUI - it inherits this
+app's own console (the cmd window sim_gui.bat opened), so there's no in-app
+log panel; buttons just show run/done state. CARLA/Foxglove exe paths are
+persisted as real user-scope Windows env vars (CARLA_ROOT/FOXGLOVE_EXE via
+setx), not a repo-local file - they're machine facts, not per-clone ones.
 
 Workflow, top to bottom:
-  1. BUILD & TEST           - build.bat <project> <target> <platform>
-  2. CARLA                  - launch the server, run the live bridge
-  3. REPLAY & FOXGLOVE VIZ  - replay a recorded .mcap, no CARLA needed
-  4. PUBLISH                - conan create + upload to the adas-local remote
+  1. CARLA                  - launch the server, run the live bridge
+  2. REPLAY & FOXGLOVE VIZ  - replay a recorded .mcap, no CARLA needed
 
 Run:
-    gui.bat
-    (or: py df_gui.py, from this folder)
+    sim_gui.bat
+    (or: py df_sim_gui.py, from this folder)
 """
 
 import json
 import os
 import socket
 import subprocess
-import sys
 import threading
 import tkinter as tk
 import webbrowser
 from tkinter import filedialog, ttk
 
-import yaml
-
 # ── paths ─────────────────────────────────────────────────────────────────────
 _THIS_DIR = os.path.dirname(os.path.abspath(__file__))          # modules/df/scripts
 DF_ROOT = os.path.dirname(_THIS_DIR)                              # modules/df
-SUPERPROJECT_ROOT = os.path.dirname(os.path.dirname(DF_ROOT))     # up: modules -> root
 
-sys.path.insert(0, os.path.join(SUPERPROJECT_ROOT, "scripts"))
-import conan_publish  # noqa: E402 - path must be set up first
-
-PACKAGE_NAME = "adas-df"
-
-CONF_DIR = os.path.join(SUPERPROJECT_ROOT, "conf")
-DF_BUILD_YML = os.path.join(DF_ROOT, "conf", "build.yml")
-DF_CMAKE_PRESETS = os.path.join(DF_ROOT, "CMakePresets.json")
-DF_CMAKELISTS = os.path.join(DF_ROOT, "CMakeLists.txt")
 CARLA_DIR = os.path.join(DF_ROOT, "tools", "carla")
 REPLAY_DIR = os.path.join(CARLA_DIR, "replay")
 SCENARIOS_DIR = os.path.join(DF_ROOT, "tests", "carla_scenarios")
 TESTRUNS_DIR = os.path.join(DF_ROOT, "tests", "carla_testruns")
 EXPORTS_DIR = os.path.join(TESTRUNS_DIR, "exports")
-GUI_CFG_PATH = os.path.join(_THIS_DIR, "df_gui_config.json")
+GUI_CFG_PATH = os.path.join(_THIS_DIR, "df_sim_gui_config.json")
 
 # -vulkan avoids the D3D device-lost crash under HAGS (see tools/carla/README.md
 # "Known issues"); -windowed + explicit resolution is confirmed necessary
@@ -118,46 +108,8 @@ def _save_cfg(**updates):
         pass
 
 
-# ── data helpers (dropdowns - read-only, never edit these files, never
+# ── data helpers (dropdowns - read-only, scan the filesystem, never
 #    hardcoded lists) ─────────────────────────────────────────────────────────
-
-def _list_projects():
-    if not os.path.isdir(CONF_DIR):
-        return ["base"]
-    names = sorted(
-        os.path.splitext(f)[0] for f in os.listdir(CONF_DIR) if f.endswith(".yaml")
-    )
-    return names or ["base"]
-
-
-def _list_platforms(project):
-    try:
-        with open(DF_BUILD_YML, encoding="utf-8") as f:
-            data = yaml.safe_load(f)
-        platforms = data["variants"][project]["sil"]["platforms"]
-        return [p["build"] for p in platforms] or ["vs2026"]
-    except (OSError, KeyError, IndexError, TypeError, yaml.YAMLError):
-        return ["vs2026"]
-
-
-def _list_targets():
-    """build.bat's valid <target> values aren't listed in any YAML (gtest
-    isn't a project-scoped 'part') - the actual source of truth is which
-    configurePresets exist in CMakePresets.json, each named <target>-<platform>."""
-    try:
-        with open(DF_CMAKE_PRESETS, encoding="utf-8") as f:
-            data = json.load(f)
-        names = set()
-        for preset in data.get("configurePresets", []):
-            if preset.get("hidden"):
-                continue
-            name = preset.get("name", "")
-            if "-" in name:
-                names.add(name.split("-", 1)[0])
-        return sorted(names) or ["sil", "gtest"]
-    except (OSError, json.JSONDecodeError, KeyError):
-        return ["sil", "gtest"]
-
 
 def _list_scenarios():
     if not os.path.isdir(SCENARIOS_DIR):
@@ -169,23 +121,6 @@ def _list_recordings():
     if not os.path.isdir(TESTRUNS_DIR):
         return []
     return sorted(f for f in os.listdir(TESTRUNS_DIR) if f.endswith(".mcap"))
-
-
-def _current_version():
-    """Reads the VERSION currently declared in CMakeLists.txt - the same
-    line conanfile.py's set_version() reads, and what `conan create` would
-    publish right now if you didn't bump it first."""
-    try:
-        import re
-        with open(DF_CMAKELISTS, encoding="utf-8") as f:
-            content = f.read()
-        match = re.search(
-            r"project\(\s*" + re.escape(PACKAGE_NAME) + r"\s+VERSION\s+([0-9]+\.[0-9]+\.[0-9]+)",
-            content, re.IGNORECASE,
-        )
-        return match.group(1) if match else "?"
-    except OSError:
-        return "?"
 
 
 # ── hover tooltips (Tkinter has no built-in widget for this) ──────────────────
@@ -222,29 +157,16 @@ class _Tooltip:
 # ── subprocess runner ─────────────────────────────────────────────────────────
 
 class _ProcessRunner:
-    """Runs one or more commands in sequence on a background thread so the UI
-    stays responsive. Output is NOT captured - each command inherits this
-    app's own console, same window the user launched gui.bat from. Stops the
-    sequence early if a command fails or stop() is called.
+    """Runs a command on a background thread so the UI stays responsive. Output
+    is NOT captured - the command inherits this app's own console, same window
+    the user launched sim_gui.bat from. Stops early if stop() is called."""
 
-    Bug #18: if `cmds` is the editable-aware publish sequence ([editable
-    remove, create, upload, editable add]) and stop() lands after the
-    `editable remove` has completed but before the final `editable add`
-    runs, the package's editable registration would otherwise be left
-    removed with no restore - silently breaking the user's own local dev
-    loop. _run() detects exactly that condition and runs the restore
-    command itself before reporting done; on_done then receives a second
-    `editable_restored` arg (True/False) only when this happened, so
-    existing single-arg on_done callbacks (build/CARLA/replay, none of
-    which run an editable-aware sequence) are unaffected."""
-
-    def __init__(self, cmds, cwd, on_done=None):
-        self._cmds = cmds if isinstance(cmds[0], list) else [cmds]
+    def __init__(self, cmd, cwd, on_done=None):
+        self._cmd = cmd
         self._cwd = cwd
         self._on_done = on_done
         self._proc = None
         self._stopped = False
-        self._completed = 0
 
     def start(self):
         threading.Thread(target=self._run, daemon=True).start()
@@ -254,148 +176,39 @@ class _ProcessRunner:
         if self._proc and self._proc.poll() is None:
             self._proc.terminate()
 
-    def _needs_editable_restore(self):
-        cmds = self._cmds
-        return (
-            len(cmds) > 1
-            and cmds[0][:3] == ["conan", "editable", "remove"]
-            and cmds[-1][:3] == ["conan", "editable", "add"]
-            and 0 < self._completed < len(cmds) - 1
-        )
-
     def _run(self):
-        rc = 0
-        for cmd in self._cmds:
-            if self._stopped:
-                break
-            try:
-                self._proc = subprocess.Popen(cmd, cwd=self._cwd)
-                rc = self._proc.wait()
-            except OSError:
-                rc = -1
-            if rc != 0:
-                break
-            self._completed += 1
-
-        restored = None
-        if self._stopped and self._needs_editable_restore():
-            try:
-                restored = subprocess.run(self._cmds[-1], cwd=self._cwd).returncode == 0
-            except OSError:
-                restored = False
-
+        try:
+            self._proc = subprocess.Popen(self._cmd, cwd=self._cwd)
+            rc = self._proc.wait()
+        except OSError:
+            rc = -1
         if self._on_done:
-            if restored is not None:
-                self._on_done(rc, restored)
-            else:
-                self._on_done(rc)
+            self._on_done(rc)
 
 
 # ── main app ──────────────────────────────────────────────────────────────────
 
-class DfGuiApp:
+class DfSimGuiApp:
 
     def __init__(self, root):
         self.root = root
-        root.title("df - Developer Operations")
-        root.minsize(680, 480)
+        root.title("df - Simulator (CARLA + Replay)")
+        root.minsize(680, 360)
 
         self._cfg = _load_cfg()
 
-        self._build_runner = None
         self._carla_runner = None
         self._replay_runner = None
         self._carla_proc = None  # CarlaUE4.exe handle - separate from the bridge runner
 
-        self._build_buildtest_section()
         self._build_carla_section()
         self._build_replay_section()
-        self._build_publish_section()
-
-    # ── BUILD & TEST ──────────────────────────────────────────────────────────
-
-    def _build_buildtest_section(self):
-        frame = ttk.LabelFrame(self.root, text="BUILD & TEST", padding=8)
-        frame.pack(fill="x", padx=10, pady=(10, 4))
-
-        row1 = ttk.Frame(frame)
-        row1.pack(fill="x")
-        ttk.Label(row1, text="Project:").pack(side="left")
-        self._project = tk.StringVar(value=self._cfg.get("project", "base"))
-        project_cb = ttk.Combobox(row1, textvariable=self._project, values=_list_projects(),
-                                   state="readonly", width=14)
-        project_cb.pack(side="left", padx=(4, 12))
-        project_cb.bind("<<ComboboxSelected>>", self._on_project_changed)
-
-        ttk.Label(row1, text="Target:").pack(side="left")
-        self._target = tk.StringVar(value=self._cfg.get("target", "sil"))
-        target_cb = ttk.Combobox(row1, textvariable=self._target, values=_list_targets(),
-                                  state="readonly", width=10)
-        target_cb.pack(side="left", padx=(4, 0))
-
-        row2 = ttk.Frame(frame)
-        row2.pack(fill="x", pady=(4, 0))
-        ttk.Label(row2, text="Platform:").pack(side="left")
-        self._platform = tk.StringVar(value=self._cfg.get("platform", "vs2026"))
-        self._platform_cb = ttk.Combobox(row2, textvariable=self._platform,
-                                          values=_list_platforms(self._project.get()),
-                                          state="readonly", width=14)
-        self._platform_cb.pack(side="left", padx=(4, 12))
-
-        self._clean = tk.BooleanVar(value=False)
-        clean_cb = ttk.Checkbutton(row2, text="clean", variable=self._clean)
-        clean_cb.pack(side="left", padx=(0, 12))
-        _Tooltip(clean_cb, "Deletes the existing build-<target>-<platform>\n"
-                            "folder first, forcing a full rebuild instead of\n"
-                            "an incremental one.")
-
-        self._build_run_btn = ttk.Button(row2, text="▶ Build", command=self._run_build)
-        self._build_run_btn.pack(side="left")
-        self._build_stop_btn = ttk.Button(row2, text="■ Stop", command=self._stop_build,
-                                           state="disabled")
-        self._build_stop_btn.pack(side="left", padx=4)
-
-        self._build_cmd_label = ttk.Label(frame, text="", foreground="#555",
-                                           font=("Consolas", 8))
-        self._build_cmd_label.pack(anchor="w", pady=(6, 0))
-        self._build_status = ttk.Label(frame, text="idle", foreground="gray")
-        self._build_status.pack(anchor="w")
-
-    def _on_project_changed(self, _=None):
-        self._platform_cb.config(values=_list_platforms(self._project.get()))
-        _save_cfg(project=self._project.get())
-
-    def _run_build(self):
-        project, target, platform = self._project.get(), self._target.get(), self._platform.get()
-        _save_cfg(project=project, target=target, platform=platform)
-        cmd = ["cmd.exe", "/c", "build.bat", project, target, platform] + (
-            ["clean"] if self._clean.get() else [])
-        self._build_run_btn.config(state="disabled")
-        self._build_stop_btn.config(state="normal")
-        self._build_cmd_label.config(text="$ " + " ".join(cmd) + f"   (cwd: {DF_ROOT})")
-        self._build_status.config(text="running...", foreground="darkorange")
-        self._build_runner = _ProcessRunner(cmd, DF_ROOT, on_done=self._on_build_done)
-        self._build_runner.start()
-
-    def _stop_build(self):
-        if self._build_runner:
-            self._build_runner.stop()
-
-    def _on_build_done(self, rc):
-        self.root.after(0, self._build_done_ui, rc)
-
-    def _build_done_ui(self, rc):
-        self._build_run_btn.config(state="normal")
-        self._build_stop_btn.config(state="disabled")
-        ok = rc == 0
-        self._build_status.config(text=f"done (rc={rc})" if ok else f"exited rc={rc}",
-                                   foreground="#2a9d2a" if ok else "#c0392b")
 
     # ── CARLA ─────────────────────────────────────────────────────────────────
 
     def _build_carla_section(self):
         frame = ttk.LabelFrame(self.root, text="CARLA", padding=8)
-        frame.pack(fill="x", padx=10, pady=4)
+        frame.pack(fill="x", padx=10, pady=(10, 4))
 
         row1 = ttk.Frame(frame)
         row1.pack(fill="x")
@@ -695,175 +508,10 @@ class DfGuiApp:
                 pass  # fall through to the browser tab below
         webbrowser.open("https://studio.foxglove.dev/")
 
-    # ── PUBLISH ───────────────────────────────────────────────────────────────
-
-    def _build_publish_section(self):
-        frame = ttk.LabelFrame(self.root, text="PUBLISH (adas-local remote)", padding=8)
-        frame.pack(fill="x", padx=10, pady=(4, 10))
-
-        row1 = ttk.Frame(frame)
-        row1.pack(fill="x")
-        ttk.Label(row1, text="Existing versions:").pack(side="left")
-        self._pub_existing = tk.StringVar()
-        self._pub_existing_cb = ttk.Combobox(row1, textvariable=self._pub_existing,
-                                              values=[], state="readonly", width=14)
-        self._pub_existing_cb.pack(side="left", padx=4)
-        ttk.Button(row1, text="↻", width=3, command=self._refresh_publish_versions).pack(
-            side="left")
-        self._pub_remote_status = ttk.Label(row1, text="", foreground="gray")
-        self._pub_remote_status.pack(side="left", padx=(8, 0))
-        _Tooltip(self._pub_existing_cb,
-                  "Versions of adas-df already on the adas-local remote -\n"
-                  "refreshed automatically when this GUI starts. Pick a new\n"
-                  "version number below that isn't already in this list.")
-
-        row2 = ttk.Frame(frame)
-        row2.pack(fill="x", pady=(6, 0))
-        ttk.Label(row2, text="Current (CMakeLists.txt):").pack(side="left")
-        self._pub_current_label = ttk.Label(row2, text=_current_version(), foreground="#555")
-        self._pub_current_label.pack(side="left", padx=(4, 12))
-
-        ttk.Label(row2, text="New version:").pack(side="left")
-        self._pub_new_version = tk.StringVar(value=_current_version())
-        new_version_entry = ttk.Entry(row2, textvariable=self._pub_new_version, width=10)
-        new_version_entry.pack(side="left", padx=4)
-        _Tooltip(new_version_entry,
-                  "Publishing rewrites this into CMakeLists.txt's\n"
-                  "project(adas-df VERSION ...) line before running\n"
-                  "conan create - the same line conanfile.py's set_version()\n"
-                  "already reads. Bumping is a deliberate choice, not\n"
-                  "automatic - pick a version not already in the list above.\n"
-                  "\n"
-                  "Builds EVERY project variant declared in conf/build.yml\n"
-                  "(base, cus1, ...) - one conan create per variant, then a\n"
-                  "single upload once all of them succeed. This is\n"
-                  "deliberate: conan upload has no concept of \"did you build\n"
-                  "every configuration\", so publishing only ever builds one\n"
-                  "variant would silently leave the others missing on the\n"
-                  "remote.")
-
-        self._publish_btn = ttk.Button(row2, text="⬆ Publish", command=self._run_publish)
-        self._publish_btn.pack(side="left", padx=(8, 4))
-        self._publish_stop_btn = ttk.Button(row2, text="■ Stop", command=self._stop_publish,
-                                             state="disabled")
-        self._publish_stop_btn.pack(side="left")
-
-        self._publish_cmd_label = ttk.Label(frame, text="", foreground="#555",
-                                             font=("Consolas", 8))
-        self._publish_cmd_label.pack(anchor="w", pady=(6, 0))
-        self._publish_status = ttk.Label(frame, text="idle", foreground="gray")
-        self._publish_status.pack(anchor="w")
-
-        self._publish_runner = None
-        self._refresh_publish_versions()
-
-    def _refresh_publish_versions(self):
-        # Bug #10: querying the remote used to run synchronously on the main
-        # thread (measured ~14s freeze when unreachable) - now backgrounded,
-        # same as every other button's _ProcessRunner pattern.
-        self._pub_remote_status.config(text="checking remote...", foreground="darkorange")
-
-        def work():
-            try:
-                versions = conan_publish.list_remote_versions(PACKAGE_NAME)
-            except conan_publish.RemoteUnavailableError as exc:
-                self.root.after(0, self._on_refresh_versions_done, None, exc)
-                return
-            self.root.after(0, self._on_refresh_versions_done, versions, None)
-
-        threading.Thread(target=work, daemon=True).start()
-
-    def _on_refresh_versions_done(self, versions, error):
-        if error is not None:
-            # Bug #9: "can't reach the remote / session expired" must look
-            # different from a genuinely empty dropdown, not silently fold
-            # into the same "nothing published yet" state.
-            self._pub_existing_cb.config(values=[])
-            self._pub_remote_status.config(text=f"[remote unreachable] {error}",
-                                            foreground="#c0392b")
-            return
-        self._pub_existing_cb.config(values=versions)
-        if versions:
-            self._pub_existing_cb.current(len(versions) - 1)
-        self._pub_remote_status.config(text="", foreground="gray")
-
-    def _run_publish(self):
-        new_version = self._pub_new_version.get().strip()
-        if not new_version:
-            self._publish_status.config(text="[error] Enter a version number.",
-                                         foreground="#c0392b")
-            return
-        self._publish_btn.config(state="disabled")
-        self._publish_status.config(text="checking remote...", foreground="darkorange")
-
-        def work():
-            try:
-                existing = conan_publish.list_remote_versions(PACKAGE_NAME)
-                if new_version in existing:
-                    self.root.after(
-                        0, self._publish_precheck_failed,
-                        f"[error] {PACKAGE_NAME}/{new_version} already exists on the "
-                        "remote - pick a different version.")
-                    return
-                cmds = conan_publish.publish_commands(DF_ROOT, PACKAGE_NAME, new_version)
-            except conan_publish.RemoteUnavailableError as exc:
-                self.root.after(0, self._publish_precheck_failed,
-                                 f"[error] remote unreachable: {exc}")
-                return
-            except conan_publish.MissingDependencyError as exc:
-                self.root.after(0, self._publish_precheck_failed, f"[error] {exc}")
-                return
-            self.root.after(0, self._publish_precheck_ok, cmds, new_version)
-
-        threading.Thread(target=work, daemon=True).start()
-
-    def _publish_precheck_failed(self, message):
-        self._publish_btn.config(state="normal")
-        self._publish_status.config(text=message, foreground="#c0392b")
-
-    def _publish_precheck_ok(self, cmds, new_version):
-        try:
-            conan_publish.bump_cmake_version(DF_CMAKELISTS, PACKAGE_NAME, new_version)
-        except (OSError, ValueError) as exc:
-            self._publish_btn.config(state="normal")
-            self._publish_status.config(text=f"[error] {exc}", foreground="#c0392b")
-            return
-        self._pub_current_label.config(text=_current_version())
-
-        self._publish_stop_btn.config(state="normal")
-        self._publish_cmd_label.config(
-            text="\n".join("$ " + " ".join(c) for c in cmds) + f"   (cwd: {DF_ROOT})")
-        self._publish_status.config(text="publishing...", foreground="darkorange")
-        self._publish_runner = _ProcessRunner(cmds, DF_ROOT, on_done=self._on_publish_done)
-        self._publish_runner.start()
-
-    def _stop_publish(self):
-        if self._publish_runner:
-            self._publish_runner.stop()
-
-    def _on_publish_done(self, rc, editable_restored=None):
-        self.root.after(0, self._publish_done_ui, rc, editable_restored)
-
-    def _publish_done_ui(self, rc, editable_restored=None):
-        self._publish_btn.config(state="normal")
-        self._publish_stop_btn.config(state="disabled")
-        if editable_restored is True:
-            self._publish_status.config(
-                text="stopped - editable mode restored", foreground="#c0392b")
-        elif editable_restored is False:
-            self._publish_status.config(
-                text="stopped before editable restore - run `conan editable add .` manually",
-                foreground="#c0392b")
-        else:
-            ok = rc == 0
-            self._publish_status.config(text=f"done (rc={rc})" if ok else f"exited rc={rc}",
-                                         foreground="#2a9d2a" if ok else "#c0392b")
-        self._refresh_publish_versions()
-
 
 def main():
     root = tk.Tk()
-    DfGuiApp(root)
+    DfSimGuiApp(root)
     root.mainloop()
 
 

@@ -45,8 +45,9 @@ MinSizeRel/
 __pycache__/
 *.pyc
 
-# Developer GUI - machine-local settings (CARLA exe path, last-used selections)
-scripts/df_gui_config.json
+# Developer GUI - machine-local settings (last-used selections, CARLA exe path)
+scripts/build_gui_config.json
+scripts/df_sim_gui_config.json
 
 # Regenerable replay/--export analysis artifacts - not committed recordings
 tests/carla_testruns/exports/
