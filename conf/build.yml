@@ -77,7 +77,16 @@
 # list.
 
 layout_kind: output_folder
-package_id_extra: [enabled_functions]
+
+# recipe: Conan-package identity read by the byte-identical conanfile.py
+# template (plan.md item 20, docs/conanfile_commonality_plan.md §7.2).
+# package_id_extra moved here from the old top-level field: it folds each named
+# per-project variant key (enabled_functions) into the package_id so `aeb` vs
+# `aeb;bsd` are distinct packages.
+recipe:
+  type: shared-library
+  libs: [df_sil]
+  package_id_extra: [enabled_functions]
 
 variants:
   base:
