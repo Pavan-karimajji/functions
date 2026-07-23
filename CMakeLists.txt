@@ -40,6 +40,10 @@ if(NOT TARGET AdasInterfaces::AdasInterfaces)
     find_package(AdasInterfaces REQUIRED)
 endif()
 
+if(NOT TARGET AdasMathlib::AdasMathlib)
+    find_package(AdasMathlib REQUIRED)
+endif()
+
 add_subdirectory(src/component)
 
 if(TARGET_TYPE STREQUAL "sil")

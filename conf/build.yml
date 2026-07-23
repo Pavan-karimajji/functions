@@ -95,6 +95,7 @@ variants:
       - yaml-cpp/0.8.0
       - adas-interfaces/1.0.0
       - adas-shared-config/1.0.0
+      - adas-mathlib/1.0.0
     tool_requires:
       - protobuf/3.21.12
     enabled_functions:
@@ -123,6 +124,7 @@ variants:
       - yaml-cpp/0.8.0
       - adas-interfaces/1.0.0
       - adas-shared-config/1.0.0
+      - adas-mathlib/1.0.0
     tool_requires:
       - protobuf/3.21.12
     enabled_functions:

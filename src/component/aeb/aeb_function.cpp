@@ -13,6 +13,7 @@
 #include <limits>
 
 #include "component/common/framework/object_limits.hpp"
+#include "mathlib/geometry.h"
 
 namespace adas::df {
 
@@ -53,10 +54,15 @@ void AebFunction::exec(double dtS) {
     const int numObjects = std::min(objects.size(), static_cast<int>(kMaxGenObjects));
     for (int i = 0; i < numObjects; ++i) {
       const auto& obj = objects.Get(i);
-      const float dx = obj.kinematic().f_dist_x();
+      // Ego-relative position as a proper geometry type (mathlib item 22),
+      // drop-in for the previous ad-hoc `dx` float. CV-TTC today is still
+      // longitudinal-only (.x) - item 5's remaining scope (lateral corridor
+      // gating, AEB_LATERAL_RELEVANCE_M) is what starts reading .y.
+      const mathlib::CartesianPoint2D<float> objPos(obj.kinematic().f_dist_x(),
+                                                      obj.kinematic().f_dist_y());
       const float vrelX = obj.kinematic().f_vrel_x();
-      if (dx > 0.0f && vrelX < 0.0f) {
-        const double ttcS = static_cast<double>(dx) / -static_cast<double>(vrelX);
+      if (objPos.x > 0.0f && vrelX < 0.0f) {
+        const double ttcS = static_cast<double>(objPos.x) / -static_cast<double>(vrelX);
         if (ttcS < minTtcS) {
           minTtcS = ttcS;
           criticalId = obj.general().ui_id();
