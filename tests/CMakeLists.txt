@@ -20,6 +20,12 @@ set(DF_TEST_SOURCES
     unit/common/framework/test_df_params.cpp
     unit/common/framework/test_df_runner.cpp
     unit/sil/test_param_loader.cpp   # ungated: ParamLoader doesn't depend on ENABLED_FUNCTIONS
+    unit/utils/test_motion_models.cpp   # ungated: df_utils doesn't depend on ENABLED_FUNCTIONS
+    unit/utils/test_ttc.cpp
+    unit/utils/test_angles.cpp
+    unit/utils/test_mathlib_extras.cpp
+    unit/utils/test_guards.cpp
+    unit/utils/test_curves.cpp
 )
 
 # Test sources/links follow the same ENABLED_FUNCTIONS gating as production
@@ -41,6 +47,7 @@ target_compile_definitions(df_tests PRIVATE
 
 target_link_libraries(df_tests PRIVATE
     df_common
+    df_utils
     df_sil
     GTest::gtest_main
 )

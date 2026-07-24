@@ -14,6 +14,7 @@
 
 #include "component/common/framework/object_limits.hpp"
 #include "mathlib/geometry.h"
+#include "utils/colldet/ttc.hpp"
 
 namespace adas::df {
 
@@ -61,12 +62,13 @@ void AebFunction::exec(double dtS) {
       const mathlib::CartesianPoint2D<float> objPos(obj.kinematic().f_dist_x(),
                                                       obj.kinematic().f_dist_y());
       const float vrelX = obj.kinematic().f_vrel_x();
-      if (objPos.x > 0.0f && vrelX < 0.0f) {
-        const double ttcS = static_cast<double>(objPos.x) / -static_cast<double>(vrelX);
-        if (ttcS < minTtcS) {
-          minTtcS = ttcS;
-          criticalId = obj.general().ui_id();
-        }
+      // constantVelocityTtcS owns the "ahead + closing -> finite TTC, else
+      // +inf" guard (docs/df_utils_plan.md §5); the min-TTC scan stays here.
+      const double ttcS = adas::df::utils::colldet::constantVelocityTtcS(
+          static_cast<double>(objPos.x), -static_cast<double>(vrelX));
+      if (ttcS < minTtcS) {
+        minTtcS = ttcS;
+        criticalId = obj.general().ui_id();
       }
     }
 

@@ -44,6 +44,7 @@ if(NOT TARGET AdasMathlib::AdasMathlib)
     find_package(AdasMathlib REQUIRED)
 endif()
 
+add_subdirectory(src/utils)
 add_subdirectory(src/component)
 
 if(TARGET_TYPE STREQUAL "sil")
